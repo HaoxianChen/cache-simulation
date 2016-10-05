@@ -7,7 +7,11 @@ python bimodal.py [minimum cache size] [maximum cache size] [-s step]
 ```
 
 #### To plot simulation results:
+Plot miss rate over different cache sizes
 ```
-python plot.py [logs/log-file-name] -m
-python plot.py [logs/log-file-name] -h
+python plot.py [logs/log-file-name] m
+```
+Plot hit age and eviction age distribution
+```
+python plot.py [logs/log-file-name] h
 ```
