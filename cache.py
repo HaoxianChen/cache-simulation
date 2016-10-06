@@ -79,9 +79,8 @@ class Cache:
         return victim_age
 
     def get_hit_ages(self):
-#        return np.divide(self.hit_ages,sum(self.hit_ages),dtype=float)
         return self.hit_ages
-            
+
     def get_evict_ages(self):
         return self.evict_ages
 

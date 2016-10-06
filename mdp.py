@@ -7,7 +7,32 @@ import logging
 import argparse
 from cache import *
 
-MAX_AGE = 150
+def mdp_repl_policy(hit_counter,evict_counter):
+    value = np.zeros(MAX_AGE,)
+    new_value = np.zeros(MAX_AGE,)
+    convergence = False
+    theta = 1
+    print 'started value iteration:'
+    iteration_times = 1000
+    for i in range(iteration_times):
+        for age in range(MAX_AGE-1):
+            if sum(hit_counter[age:MAX_AGE]) > 0:
+                hit_rate = float(hit_counter[age]) /float(sum(hit_counter[age:MAX_AGE])) 
+            else:
+                hit_rate = 0
+            if sum(evict_counter[age:MAX_AGE]) > 0:
+                evict_rate = float(evict_counter[age]) /float(sum(evict_counter[age:MAX_AGE])) 
+            else:
+                evict_rate = 0
+            new_value[age] = hit_rate*(1+value[0])\
+                + evict_rate*value[0] \
+                + (1-hit_rate-evict_rate)*value[age+1]
+        delta = abs(np.subtract(new_value,value,dtype=float)).max()
+        convergence =  delta < theta
+        if i % 100 == 0: print delta
+        if convergence: return value
+
+    return delta
 
 def weighted_choice(weights):
     totals = []
@@ -66,6 +91,7 @@ for j,s in enumerate(cache_size):
             big_array_counter += 1
         cache.lookup(addr)
     miss_rate[j] = 1-cache.get_hit_rate()
+    # log hit age and eviction age distribution
     f.write(str(s)+'\n')
     for a in cache.get_hit_ages().tolist():
         f.write(str(a)+' ')
@@ -74,7 +100,9 @@ for j,s in enumerate(cache_size):
         f.write(str(a)+' ')
     f.write('\n')
 
+print mdp_repl_policy(cache.get_hit_ages(),cache.get_evict_ages())
 
+# log miss rate curve
 for s in cache_size:
     f.write(str(s)+' ')
 f.write('\n')
