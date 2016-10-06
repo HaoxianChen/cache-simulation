@@ -1,4 +1,5 @@
 import numpy as np
+import logging
 import random
 
 MAX_AGE = 150
