@@ -7,13 +7,17 @@ import logging
 import argparse
 from cache import *
 
+
 def mdp_repl_policy(hit_counter,evict_counter):
     value = np.zeros(MAX_AGE,dtype=float)
     new_value = np.zeros(MAX_AGE,dtype=float)
+    delta= np.zeros(MAX_AGE,dtype=float)
     convergence = False
-    theta = 0.001
-    iteration_times = 1000
+    theta = 0.01
+    iteration_times = 5000
+    logging.debug('\nValue Iteration Traces:\n')
     for i in range(iteration_times):
+        logging.info('iteration: ' + str(i))
         for age in range(MAX_AGE-1):
             if sum(hit_counter[age:MAX_AGE]) > 0:
                 hit_rate = float(hit_counter[age]) /float(sum(hit_counter[age:MAX_AGE])) 
@@ -26,9 +30,13 @@ def mdp_repl_policy(hit_counter,evict_counter):
             new_value[age] = hit_rate*(1+value[0])\
                 + evict_rate*value[0] \
                 + (1-hit_rate-evict_rate)*value[age+1]
-        delta = abs(np.subtract(new_value,value,dtype=float)).max()
-        convergence =  delta < theta
-        value = new_value
+            delta[age] = abs(new_value[age]-value[age])
+            if new_value[age] > 0: 
+                logging.info('age: ' + str(age) \
+                    + ' value:' + str(new_value[age])) 
+        logging.info('iteration: ' + str(i) + ' delta = ' + str(max(delta)))
+        convergence =  max(delta) < theta
+        value = np.copy(new_value)
         if convergence: return value
 
     return value
@@ -62,25 +70,27 @@ miss_rate = np.zeros(len(cache_size),)
 
 test_spec = str(args.s0) + '-' + str(args.s1) + '-' + str(args.step)
 LOG_FILENAME = 'logs/trace-' + test_spec +'.log'
-logging.basicConfig(filename=LOG_FILENAME,level=logging.INFO)
+logging.basicConfig(filename=LOG_FILENAME, filemode='w+',level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 FILENAME = 'logs/curve-' + test_spec +'.log'
 f = open(FILENAME,'w')
 f.write(str(len(cache_size))+'\n')
 
+value = np.zeros(MAX_AGE,dtype=float)
+
 for j,s in enumerate(cache_size):
     logger.info('simulating cache size at ' + str(s))
 
-    cache = Cache(s)
+    cache = Cache(s,value)
     k = weighted_choice([50,50])
     small_array_counter = 0
     big_array_counter = 0
     for i in range(iterate_times):
         if i % 2 == 0:
-            k = weighted_choice([149,1])
+            k = weighted_choice([149,0])
         elif i % 2 == 1:
-            k = weighted_choice([1,149])
+            k = weighted_choice([0,149])
 
         if k == 0:
             addr = small_array[small_array_counter % len(small_array)]
@@ -98,7 +108,10 @@ for j,s in enumerate(cache_size):
     for a in cache.get_evict_ages().tolist():
         f.write(str(a)+' ')
     f.write('\n')
-    value = mdp_repl_policy(cache.get_hit_ages(),cache.get_evict_ages())
+
+    value = np.copy(mdp_repl_policy(cache.get_hit_ages(),cache.get_evict_ages()))
+
+    # log rank function
     for v in value:
         f.write(str(v)+' ')
     f.write('\n')

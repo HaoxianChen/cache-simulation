@@ -5,10 +5,11 @@ import random
 MAX_AGE = 150
 
 class Cache:
-    def __init__(self,size = 32):
+    def __init__(self, size, value ):
         self.size = size
         self.data = []
         self.counter = -1
+        self.value = value
 
         # distributions
         self.hit_ages = np.zeros((MAX_AGE,), dtype=np.int)
@@ -44,7 +45,7 @@ class Cache:
     
     def repl_policy(self):
         # return a ranked list of eviction age
-        rank = range(33,100)+range(1,33)
+        rank = np.argsort(self.value)
         return rank
 
     def update(self,addr):

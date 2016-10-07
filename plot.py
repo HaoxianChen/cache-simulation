@@ -41,13 +41,15 @@ for i in range(data_len):
         plt.xlabel('age')
         plt.title('evict age distribution at cache size ' +size)
 
-line = f.readline()
-if args.gtype == 'r':
-    x = np.fromstring(line,dtype=float,sep=' ')
-    plt.figure()
-    plt.plot(x,label='age values')
-    plt.xlabel('ages')
-    plt.ylabel('value')
+    line = f.readline()
+    if args.gtype == 'r':
+        x = np.fromstring(line,dtype=float,sep=' ')
+        plt.subplot(data_len,1,i)
+        plt.title('cache size: ' + str(size))
+        plt.plot(x,label='age values')
+        plt.axis([0,len(x),min(x[0:90]),max(x)])
+        plt.xlabel('ages')
+        plt.ylabel('value')
 
 if args.gtype == 'm':
     line = f.readline()
