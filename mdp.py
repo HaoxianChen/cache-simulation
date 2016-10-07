@@ -14,7 +14,7 @@ def mdp_repl_policy(hit_counter,evict_counter):
     delta= np.zeros(MAX_AGE,dtype=float)
     convergence = False
     theta = 0.01
-    iteration_times = 5000
+    iteration_times = 10000
     logging.debug('\nValue Iteration Traces:\n')
     for i in range(iteration_times):
         logging.info('iteration: ' + str(i))
@@ -88,9 +88,9 @@ for j,s in enumerate(cache_size):
     big_array_counter = 0
     for i in range(iterate_times):
         if i % 2 == 0:
-            k = weighted_choice([149,0])
+            k = weighted_choice([149,2])
         elif i % 2 == 1:
-            k = weighted_choice([0,149])
+            k = weighted_choice([2,149])
 
         if k == 0:
             addr = small_array[small_array_counter % len(small_array)]
