@@ -47,7 +47,7 @@ for i in range(data_len):
         plt.subplot(data_len,1,i)
         plt.title('cache size: ' + str(size))
         plt.plot(x,label='age values')
-        plt.axis([0,len(x),min(x[0:90]),max(x)])
+        plt.axis([0,len(x),min(x[0:80]),max(x)])
         plt.xlabel('ages')
         plt.ylabel('value')
 
