@@ -21,18 +21,13 @@ class Cache:
         # also need to update the age, hit, eviction distribution too
         self.age()
         self.counter += 1
-#        self.log_data()
         for n in self.data:
             if n['addr'] == addr:
-#                logging.info('hit addr: ' + str(addr) + ' age: ' +
-#                        str(n['age']))
-                # update the hit age distribution
                 if n['age'] < len(self.hit_ages):
                     self.hit_ages[n['age']] += 1 
                 # the age of hitted cnadicate is reset to 0
                 n['age'] = 0
                 return n['data']
-#        logging.info('miss addr: ' + str(addr))
         # if address not found, update cache
         return self.update(addr)
 
@@ -63,21 +58,30 @@ class Cache:
         return new_node['data']
 
     def evict(self):
-        rank = self.repl_policy()
-        for victim_age in rank:
+        is_evicted = False
+        local_values = list(self.value)
+        while not is_evicted:
+            victim_age = random.choice([i for i,x in enumerate(local_values) if x == max(local_values)])
+            
             for n in self.data:
                 if n['age'] == victim_age:
                     self.data.remove(n)
-                    return victim_age
+                    is_evicted = True
                 elif n['age'] > MAX_AGE:
                     self.data.remove(n)
                     logging.info('evicted candidate at age' + str(n['age']))
-                    return n['age']
+                    is_evicted = True
+                    victim_age =  n['age']
+            if victim_age >= len(local_values):
+                print victim_age
+                print is_evicted
+            # if candidate not found, search the next available candidate
+            local_values[victim_age] = -1
         # if no desired age candidate found, randomly evict a candidate
-        logging.info(str(self.size)+'-have to randomly kick an candidate')
-        victim_index = random.randint(0,len(self.data)-1)
-        victim_age = self.data[victim_index]['age']
-        del self.data[victim_index]
+#         logging.info(str(self.size)+'-have to randomly kick an candidate')
+#         victim_index = random.randint(0,len(self.data)-1)
+#         victim_age = self.data[victim_index]['age']
+#         del self.data[victim_index]
         return victim_age
 
     def get_hit_ages(self):

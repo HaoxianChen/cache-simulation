@@ -14,7 +14,7 @@ def mdp_repl_policy(hit_counter,evict_counter):
     delta= np.zeros(MAX_AGE,dtype=float)
     convergence = False
     theta = 0.01
-    iteration_times = 4000
+    iteration_times = 1000
     logging.debug('\nValue Iteration Traces:\n')
     for i in range(iteration_times):
         logging.info('iteration: ' + str(i))
@@ -56,34 +56,38 @@ def weighted_choice(weights):
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument('s0', type=int, help='bgin cache size')
+parser.add_argument('s1', type=int, help='end cache size')
+parser.add_argument("-s","--step", type=int, help='simulation step in cache\
+sizes', default = 4)
 parser.add_argument("-r","--showrank", type=int, help='show rank function')
 args = parser.parse_args()
 
 small_array = range(0,16)
 big_array = range(16,64)
-iterate_times = 5000
-steps = 1000
+iterate_times = 10000
+cache_size = range(args.s0,args.s1,args.step)
+miss_rate = np.zeros(len(cache_size),)
 
-test_spec = str(args.s0) 
+test_spec = str(args.s0) + '-' + str(args.s1) + '-' + str(args.step)
 LOG_FILENAME = 'logs/trace-' + test_spec +'.log'
 logging.basicConfig(filename=LOG_FILENAME, filemode='w+',level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 FILENAME = 'logs/curve-' + test_spec +'.log'
 f = open(FILENAME,'w')
-
-f.write(str(iterate_times/steps) + '\n')
+f.write(str(len(cache_size))+'\n')
 
 value = np.zeros(MAX_AGE,dtype=float)
 
+for j,s in enumerate(cache_size):
+    logger.info('simulating cache size at ' + str(s))
 
-for k in range(iterate_times/steps):
-    cache = Cache(args.s0,value)
+    cache = Cache(s,value)
     k = weighted_choice([50,50])
     small_array_counter = 0
     big_array_counter = 0
-    for i in range(steps):
-        if i % 2 != 0:
+    for i in range(iterate_times):
+        if i % 3 != 0:
             k = weighted_choice([149,2])
         else:
             k = weighted_choice([2,149])
@@ -95,19 +99,38 @@ for k in range(iterate_times/steps):
             addr = big_array[big_array_counter % len(big_array)]
             big_array_counter += 1
         cache.lookup(addr)
+    miss_rate[j] = 1-cache.get_hit_rate()
+    # log hit age and eviction age distribution
+    f.write(str(s)+'\n')
+    for a in cache.get_hit_ages().tolist():
+        f.write(str(a)+' ')
+    f.write('\n')
+    for a in cache.get_evict_ages().tolist():
+        f.write(str(a)+' ')
+    f.write('\n')
 
     value = np.copy(mdp_repl_policy(cache.get_hit_ages(),cache.get_evict_ages()))
+
     # log rank function
     for v in value:
         f.write(str(v)+' ')
     f.write('\n')
 
-miss_rate = 1-cache.get_hit_rate()
 
-# log hit age and eviction age distribution
-for a in cache.get_hit_ages().tolist():
-    f.write(str(a)+' ')
+# log miss rate curve
+for s in cache_size:
+    f.write(str(s)+' ')
 f.write('\n')
-for a in cache.get_evict_ages().tolist():
-    f.write(str(a)+' ')
+for r in miss_rate.tolist():
+    f.write(str(r)+' ')
 f.write('\n')
+f.close()
+
+if args.showrank == 1:
+    rank = cache.get_rank()
+    age_rank = np.zeros(len(rank),)
+    for i,r in enumerate(rank):
+        age_rank[r-1] = i
+    plt.title('age rank')
+    plt.plot(age_rank.tolist())
+    plt.show()
