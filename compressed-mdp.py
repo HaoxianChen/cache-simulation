@@ -9,18 +9,17 @@ import math
 np.set_printoptions(precision=2)
 
 n = 256
-x1 = 32
+x1 = 16
 x2 = 48
-p = 0.5
+p = 0.8
 d1 = x1 / p 
 d2 = x2 / (1-p)
+cache_size = 50
 
 rdd = np.zeros(n)
 rdd[d1] = p
 rdd[d2] = 1-p
 ed = np.sum(np.arange(n) * rdd) # expected reuse distance = working set size
-
-print 'ed = ' + str(ed)
 
 # x1 - size of small array
 # x2 - size of big array
@@ -52,7 +51,7 @@ analysis()
 
 # we're going to model what happens on a cache of size 20, where the
 # best policy is to evict at d1
-s = 70
+s = cache_size
 assert s > 0 and s < ed
 
 v = np.zeros((2,n))
@@ -61,17 +60,17 @@ h = np.zeros_like(v[0])
 e = np.zeros_like(v[0])
 
 # evict at d1
-assert s > d1
-hitrate = 1. - (ed - s) / (d2 - d1)
-h[d1] = rdd[d1]
-h[d2] = rdd[d2] - (1 - hitrate)
-e[d1] = 1 - hitrate
+# assert s > d1
+# hitrate = 1. - (ed - s) / (d2 - d1)
+# h[d1] = rdd[d1]
+# h[d2] = rdd[d2] - (1 - hitrate)
+# e[d1] = 1 - hitrate
 
-# # evict at zero
-# hitrate = 1. - s / ed
-# h[d1] = (1 - hitrate) * rdd[d1]
-# h[d2] = (1 - hitrate) * rdd[d2]
-# e[0] = 1 - hitrate
+# evict at zero
+hitrate = 1. - s / ed
+h[d1] = (1 - hitrate) * rdd[d1]
+h[d2] = (1 - hitrate) * rdd[d2]
+e[0] = 1 - hitrate
 
 # Smoothing of evictions...
 # for i in range(d1+1,n):
@@ -161,6 +160,6 @@ for i in range(100000):
     ax.relim()
     ax.autoscale_view()
     plt.draw() # tell pyplot data has changed
-    plt.pause(0.0001) # it won't actually redraw until you call pause!!!
+    plt.pause(0.00001) # it won't actually redraw until you call pause!!!
 
 plt.close('all')
