@@ -1,96 +1,62 @@
 \documentclass[12pt, letterpaper]{article}
 \usepackage{graphicx}
 \usepackage{amsmath}
-\graphicspath{ {../graphs/} }
 
-\title{The study of eviction age distribution in bimodal distribution with
-small cache size}
-\author{Brandon}
+\title{bimodal analysis}
+\author{Brandon Chen}
 
 \begin{document}
-
 \maketitle
 
-\begin{figure}[h]
-\includegraphics[width=\textwidth]{hit-evict-2-33}
-\caption{hit age and evicion age distritbution from cache size of 2 to 33}
-\end{figure}
+\section{Modal}
 
-Observation: Look at the eviction age distributions, where the fraction of
-evictions at the age of $D_{1}$ increases as the cache size increases. 
+Bimodal: application scans two arrays simultaneously.
 
-The way I understand this trend is that for a cache smaller than $D_{1}$, it
-has to wait for the candidates to grow to the age of $D_1$ so that they can be
-hitted or, if not hitted, to be realized it's actually cacheing the big array
-and should be evicted. Before that, given our ranking function, cache will
-always evict newly added candidates (age $0$) in order to conserve the rest of
-the candidates to let them grow as old as $D_{1}$. So how long does it take for
-the candidates to grow old enough? It depends on the cache size.
+\begin{itemize}
+\item $x_1$: size of array 1
+\item $x_2$: size of array 2
+\item $p$: probability of access array 1
+\item $1-p$: probability of access array 2
+\item $d_1 = \frac{x_1}{p}$: reuse distance for data in array 1
+\item $d_2 = \frac{x_2}{1-p}$: reuse distance for data in array 2
+\item $ed = p d_1 + (1-p) d_2$: expected reuse distance, equals the size of
+working set 
+\item S: cache size
+\item m: miss rate
+\end{itemize}
 
-Let's start with an empty cache with the size of S, and with S times of
-compulsory misses it is loaded with candidates age from 0 to S-1. Then it takes
-$D_{1}-S$ accesses for the oldest candidate to grow to the age of $D_{1}$. And
-we have candidates aging from $(D_{1}-S+1,D_{1}-S+2,...,D_{1})$ and a newly
-added candidate (age 0). Since then candidates will be hitted at the age of $D_{1}$ with probability of p, and evicted at the age of $D_{1}$ with probability 1-p.
-This will repeat until we run out of candidates at age $D_{1}$, which takes S times of accesses. Then we go back to the situation where cache consists of candidates aging from 0 to S-1. So the cycle is $D_{1}$ accesses.
-
-The above analysis implies the fraction of evictions at age $D_{1}$ among all the evictions is the following. Here I use $x$ to denote the this fraction. 
-
-
+The relation between cache size and miss rate:
 \begin{equation}
-\label{eq:fraction}
-\begin{split}
-x = \frac{pS}{(D_{1}-S)+pS} \\
-= \frac{pS}{D_{1}-(1-p)S}
-\end{split}
+S = \sum a [H(a) + E(a)]
 \end{equation}
 
-And equation \ref{eq:fraction} holds true when compared to the simulation
-results.
+\section{Policy Analysis}
 
-But then the Cache Size equation goes something really weird...
-
+\subsection{evict at the age of 0}
 \begin{equation}
-\begin{split}
-S = (1-m) \times D_{1} + xm \times D_{1} + (1-x)m \times 0 \\
-= (1-m)D_{1} + \frac{pS}{D_{1}-(1-p)S} m D_{1} \\
-\end{split}
+S = (1-m) \times ed
 \end{equation}
 
-And then the relationship between miss rate and cache size becomes
+\subsection{evict at the age of $d_1$}
 
 \begin{equation}
-\begin{split}
-m = \frac{(1-p)S^2-(2-p)D_{1}S+{D_{1}}^2}{{D_{1}}^2-D_{1}S}
-\end{split}
+\begin{gathered}
+S = m \times d_1 + p \times d_1 + (1-p-m) \times d_2 \\
+m = \frac{ed - S}{d_2-d_1}
+\end{gathered}
 \end{equation}
 
-\begin{figure}[h]
-\includegraphics[width=\textwidth]{access}
-\caption{Access pattern, with p=0.5, S1=16, S2=48}
-\label{fig:access}
-\end{figure}
+\subsection{first evict at 0, then evict d1}
+First evict at age 0, then evict $d_1$ if there appears. If no d1 candidates,
+keep evicting 0. So hits only happen at $d_1$.
 
-I did some simulations. This time I made the access parttern less random (
-shown in figure \ref{fig:access}). And the model, although very complicated,
-looks identical to a straight line.
-
-\begin{figure}[h]
-\includegraphics[width=\textwidth]{miss-rate-0-33}
-\caption{new model v.s. simulation}
-\end{figure}
-
-I thought the almost consistent gap between the model and simulation is caused
-by compulsory misses. However, after I do 10 times more iterations (100k),
-there is no significant decrease in the gap.
-
-\begin{figure}[h]
-\includegraphics[width=\textwidth]{miss-rate-0-33-100k}
-\caption{new model v.s. simulation, with 100k times iterations}
-\end{figure}
-
-(Note: I got something pretty complicated from terribly simple assumptions. I
-was probably wasting time, but I don't understand the gap so I keep this note
-anyway.)
+Here we use $x$ to denote candidates who make it to the age of d1. Hits only
+happen at age $d_1$ means: $px = 1-m$.
+\begin{equation}
+\begin{gathered}
+S = (1-m) d_1 + (1-p) x d_1 \\
+m = 1 - \frac{pS}{d_1}
+\end{gathered}
+\end{equation}
 
 \end{document}

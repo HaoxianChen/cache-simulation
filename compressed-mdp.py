@@ -20,6 +20,8 @@ rdd[d1] = p
 rdd[d2] = 1-p
 ed = np.sum(np.arange(n) * rdd) # expected reuse distance = working set size
 
+print 'ed = ' + str(ed)
+
 # x1 - size of small array
 # x2 - size of big array
 # p - fraction of accesses to small array
