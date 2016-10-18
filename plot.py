@@ -18,10 +18,12 @@ data_len = int(f.readline())
 
 def model(cache_size):
     p = 0.5
-    D1 = 32
+    x1 = 16
+
+    d1 = x1 / p
     y = np.zeros(len(cache_size),)
     for i,s in enumerate(cache_size):
-        y[i] = ((1-p) * s*s - (2-p)*D1*s + D1*D1)/(D1*D1 - D1*s)
+        y[i] = 1 - p * s / d1
     return y
 
 for i in range(data_len):
