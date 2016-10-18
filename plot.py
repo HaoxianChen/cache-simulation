@@ -1,6 +1,7 @@
 import argparse
 import matplotlib.pyplot as plt
 import numpy as np
+import compressedMDP as cmdp
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument('filename',type=str)
