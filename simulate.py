@@ -18,8 +18,8 @@ args = parser.parse_args()
 # simulation parameters
 x1 = 16 # size of array 1
 x2 = 48 # size of array 2
-p1 = 0.7 # probability of accessing array 1
-p2 = 0.3 # probability of accessing array 2
+p1 = 0.5 # probability of accessing array 1
+p2 = 0.5 # probability of accessing array 2
 iterate_times = 5000
 ed = x1 + x2 # overall expected reuse distance: the working set size, also equals
 assert p1 + p2 == 1
@@ -30,6 +30,7 @@ d2 = x2/p2
 # policy: give as values of each age
 value = np.ones(MAX_AGE,dtype=float)
 value[0] = 0
+value[d1] = -1
 
 array1= range(0,x1)
 array2 = range(x1,x1+x2)
@@ -37,9 +38,6 @@ cache_size = range(args.s0,args.s1,args.step)
 miss_rate = np.zeros(len(cache_size),)
 
 test_spec = str(args.s0) + '-' + str(args.s1) + '-' + str(args.step)
-LOG_FILENAME = 'logs/trace-' + test_spec +'.log'
-logging.basicConfig(filename=LOG_FILENAME, filemode='w+',level=logging.DEBUG)
-logger = logging.getLogger(__name__)
 
 FILENAME = 'logs/curve-' + test_spec +'.log'
 f = open(FILENAME,'w')
@@ -59,14 +57,17 @@ def weighted_choice(weights):
             return i
 
 for j,s in enumerate(cache_size):
-    logger.info('simulating cache size at ' + str(s))
 
     cache = Cache(s,value)
     a_counter1 = 0
     a_counter2 = 0
     for i in range(iterate_times):
         # simulate data access
-        k = weighted_choice([p1*100,p2*100])
+        if i % 2 == 0:
+            k = weighted_choice([p1*100,0])
+        else:
+            k = weighted_choice([0,p2*100])
+            
         if k == 0:
             addr = array1[a_counter1 % len(array1)]
             a_counter1 += 1

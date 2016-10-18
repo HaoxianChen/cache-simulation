@@ -3,7 +3,7 @@ import logging
 import random
 
 MAX_AGE = 150
-LOG_FILENAME = 'logs/cache'
+LOG_FILENAME = 'logs/cache.log'
 logging.basicConfig(filename=LOG_FILENAME, filemode='w',level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
@@ -31,7 +31,6 @@ class Cache:
                 # the age of hitted cnadicate is reset to 0
                 n['age'] = 0
                 return n['data']
-        # if address not found, update cache
         return self.update(addr)
 
     def age(self):
@@ -48,12 +47,14 @@ class Cache:
             logger.info('evicted candidate at age: ' + str(victim_age))
             if victim_age < len(self.evict_ages):
                 self.evict_ages[victim_age] += 1
-        new_node = {}
-        new_node['addr'] = addr
-        new_node['data'] = random.randint(0,100)
-        new_node['age'] = 0
-        self.data.append(new_node)
-        return new_node['data']
+
+        if len(self.data) < self.size:
+            new_node = {}
+            new_node['addr'] = addr
+            new_node['data'] = random.randint(0,100)
+            new_node['age'] = 0
+            self.data.append(new_node)
+
 
     def evict(self):
         # given the values of each age, evict the age of lowest value
