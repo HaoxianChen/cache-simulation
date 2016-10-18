@@ -3,6 +3,9 @@ import logging
 import random
 
 MAX_AGE = 150
+LOG_FILENAME = 'logs/cache'
+logging.basicConfig(filename=LOG_FILENAME, filemode='w',level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 class Cache:
     def __init__(self, size, value ):
@@ -38,16 +41,11 @@ class Cache:
             n['age'] += 1
         return
     
-    def repl_policy(self):
-        # return a ranked list of eviction age
-        rank = np.argsort(self.value)
-        return rank
-
     def update(self,addr):
         if len(self.data) == self.size:
             # if cache is already full, evict a candidate
             victim_age = self.evict()
-            logging.info('evicted candidate at age: ' + str(victim_age))
+            logger.info('evicted candidate at age: ' + str(victim_age))
             if victim_age < len(self.evict_ages):
                 self.evict_ages[victim_age] += 1
         new_node = {}
@@ -58,30 +56,24 @@ class Cache:
         return new_node['data']
 
     def evict(self):
+        # given the values of each age, evict the age of lowest value
         is_evicted = False
         local_values = list(self.value)
         while not is_evicted:
-            victim_age = random.choice([i for i,x in enumerate(local_values) if x == max(local_values)])
-            
+            victim_age = random.choice([i for i,x in enumerate(local_values) if x == min(local_values)])
+            if victim_age == 0:
+                # just don't cache the accessing data
+                is_evicted = True
             for n in self.data:
                 if n['age'] == victim_age:
                     self.data.remove(n)
                     is_evicted = True
                 elif n['age'] > MAX_AGE:
                     self.data.remove(n)
-                    logging.info('evicted candidate at age' + str(n['age']))
                     is_evicted = True
                     victim_age =  n['age']
-            if victim_age >= len(local_values):
-                print victim_age
-                print is_evicted
             # if candidate not found, search the next available candidate
-            local_values[victim_age] = -1
-        # if no desired age candidate found, randomly evict a candidate
-#         logging.info(str(self.size)+'-have to randomly kick an candidate')
-#         victim_index = random.randint(0,len(self.data)-1)
-#         victim_age = self.data[victim_index]['age']
-#         del self.data[victim_index]
+            local_values[victim_age] = max(local_values) + 1
         return victim_age
 
     def get_hit_ages(self):
@@ -95,12 +87,9 @@ class Cache:
         return float(hit_times)/float(self.counter)
 
     def log_data(self):
-        logging.info('cache data at ' + str(self.counter) + ' access: ')
+        logger.info('cache data at ' + str(self.counter) + ' access: ')
         for n in self.data:
-            logging.info(str(n))
+            logger.info(str(n))
 
     def get_data(self):
         return self.data
-
-    def get_rank(self):
-        return self.repl_policy()
