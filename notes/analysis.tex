@@ -87,43 +87,61 @@ S = \sum a [H(a) + E(a)]
 \subsection{Policy Analysis}
 
 \subsubsection{Evict at d1, then 0}
+\label{sec:d1-0}
 
 Let x denotes the fraction of candidates that make it to the age of $d_1$.
 
 When $0<S<d_1$, hits only happen at $d_1$. 
+
 \begin{center}
-\begin{tabular}{ c c c c c }
+\begin{tabular}{ c | c c c c }
+\hline
  		& d1  & d2 & d3\\ 
+\hline
  hit 	& 1-m & &\\  
- evict 	& $(1-p_1)x$   & &
+ evict 	& $(1-p_1)x$   & &\\
+\hline
 \end{tabular}
 \end{center}
 
 \begin{equation}
 \begin{gathered}
 S = (1-p_1)xd_1 + p_1 x d_1 \\
-p_1 x = m \\
+p_1 x = 1 - m \\
 m = 1 - \frac{p_1 S}{d_1}
 \end{gathered}
 \end{equation}
 
-When $d_1<S<ed$, the policy can always evict at $d_1$. 
+Confirmed by simulation.
+
+When $d_1<S< x_1 + x_2$, the policy can always evict at $d_1$, and either hit at $d_1$
+or $d_2$. 
 \begin{center}
-\begin{tabular}{ c c c c c }
- 		& d1    & d2 & d3\\ 
- hit 	& $p_1$ & $(1-m-p_1)\frac{p_2}{1-p_1}$  &$(1-m-p_1)\frac{p_3}{1-p_1}$\\
- evict 	& m   & &
+\begin{tabular}{ c | c c c c }
+\hline
+      & d1    & d2 & d3\\ 
+\hline 
+hit   & $p_1$ & $(1-m-p_1)$ &\\
+evict & m   & & \\
+\hline 
 \end{tabular}
 \end{center}
 
 \begin{equation}
-\begin{gathered}
-S = m d_1 + p_1 d_1 + (1-m-p_1)(\frac{p_2}{1-p_1} d_2 + \frac{p_3}{1-p_1} d_3)\\
-m = \frac{ed-S}{\frac{p_2}{1-p_1}d_2+\frac{p_3}{1-p_1}d_3-d_1}
-\end{gathered}
+m = \frac{p_1 d_1 + (1-p_1) d_2 - S}{d_2 - d_1}
 \end{equation}
 
+When $ x_1 + x_2 < S $ 
+
 \subsubsection{Evict at d2, then d1, then 0}
+
+When $0<S<d_1$, policy will do the same thing as described in
+section~\ref{sec:d1-0}. 
+
+Confirmed by simulation.
+
+When $d_1<S<d<2$, will always end up having candidates at $d_1$?
+
 \subsubsection{Evict at d2, then 0}
 \subsubsection{Evict at d1, then d2, then 0}
 
