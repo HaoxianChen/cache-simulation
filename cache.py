@@ -2,7 +2,7 @@ import numpy as np
 import logging
 import random
 
-MAX_AGE = 150
+MAX_AGE = 256
 LOG_FILENAME = 'logs/cache.log'
 logging.basicConfig(filename=LOG_FILENAME, filemode='w',level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -24,8 +24,10 @@ class Cache:
         # also need to update the age, hit, eviction distribution too
         self.age()
         self.counter += 1
+        logger.debug(str(self.counter) + " access addr:" + str(addr))
         for n in self.data:
             if n['addr'] == addr:
+                logger.debug('**hit** at age: ' + str(n['age']) +' **' )
                 if n['age'] < len(self.hit_ages):
                     self.hit_ages[n['age']] += 1 
                 # the age of hitted cnadicate is reset to 0
@@ -47,6 +49,8 @@ class Cache:
             logger.info('evicted candidate at age: ' + str(victim_age))
             if victim_age < len(self.evict_ages):
                 self.evict_ages[victim_age] += 1
+        else:
+            logger.info('compulsory miss')
 
         if len(self.data) < self.size:
             new_node = {}
@@ -85,7 +89,8 @@ class Cache:
 
     def get_hit_rate(self):
         hit_times = sum(self.hit_ages)
-        return float(hit_times)/float(self.counter)
+        # To get the long term hit rate, just minus the compulsory misses
+        return float(hit_times)/float(self.counter-self.size)
 
     def log_data(self):
         logger.info('cache data at ' + str(self.counter) + ' access: ')

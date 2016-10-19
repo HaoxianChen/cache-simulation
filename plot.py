@@ -1,7 +1,7 @@
 import argparse
 import matplotlib.pyplot as plt
 import numpy as np
-import compressedMDP as cmdp
+#import compressedMDP as cmdp
 
 parser = argparse.ArgumentParser(description='Process some integers.')
 parser.add_argument('filename',type=str)
@@ -18,8 +18,8 @@ f = open(args.filename)
 data_len = int(f.readline())
 
 def model(cache_size):
-    p = 0.5
-    x1 = 16
+    p = 0.4
+    x1 = 8
 
     d1 = x1 / p
     y = np.zeros(len(cache_size),)
@@ -62,7 +62,7 @@ if args.gtype == 'm':
     y2 = model(x)
     plt.figure()
     plt.plot(x,y,label='simulation')
-    plt.plot(x,y2,label='model')
+    #plt.plot(x,y2,label='model')
     plt.legend(bbox_to_anchor=(0., 1.02, 1., .102), loc=3,
                ncol=2, mode="expand", borderaxespad=0.)
     plt.xlabel('cache size')
