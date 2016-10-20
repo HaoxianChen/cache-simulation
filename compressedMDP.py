@@ -9,15 +9,16 @@ import math
 np.set_printoptions(precision=2)
 
 n = 512
-x1 = 16
-x2 = 48
-x3 = 64
-p1 = 0.4
-p2 = 0.4
+x1 = 12 # size of array 1
+x2 = 16 # size of array 2
+x3 = 18 # size of array 3
+p1 = 0.3 # probability of accessing array 1
+p2 = 0.3 # probability of accessing array 2
+p3 = 1 - p1 - p2 # probability of accessing array 3
 d1 = x1 / p1
 d2 = x2 / p2
-d3 = x3 / (1 - p1 - p2)
-cache_size = 50
+d3 = x3 / p3
+cache_size = 30
 
 rdd = np.zeros(n)
 rdd[d1] = p1
@@ -73,10 +74,10 @@ if __name__ == '__main__':
     # e[d1] = 1 - hitrate
 
     # evict at zero
-    hitrate = 0.6
-    h[d1] = (1 - hitrate) * rdd[d1]
-    h[d2] = (1 - hitrate) * rdd[d2]
-    h[d3] = (1 - hitrate) * rdd[d3]
+    hitrate = 1 - 0.320408163265
+    h[d1] = 0.6
+    h[d2] = 0.0734693877551
+    h[d3] = 0.00612244897959
     e[0] = 1 - hitrate
 
     # Smoothing of evictions...
