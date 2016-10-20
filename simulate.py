@@ -15,11 +15,11 @@ sizes', default = 4)
 args = parser.parse_args()
 
 # simulation parameters
-x1 = 8 # size of array 1
-x2 = 16 # size of array 2
-x3 = 32 # size of array 3
-p1 = 0.4 # probability of accessing array 1
-p2 = 0.4 # probability of accessing array 2
+x1 = 12 # size of array 1
+x2 = 24 # size of array 2
+x3 = 28 # size of array 3
+p1 = 0.6 # probability of accessing array 1
+p2 = 0.3 # probability of accessing array 2
 p3 = 1 - p1 - p2 # probability of accessing array 3
 ed = x1 + x2 + x3 # overall expected reuse distance: the working set size, also equals
 assert p3 > 0

@@ -2,7 +2,7 @@ import numpy as np
 import logging
 import random
 
-MAX_AGE = 256
+MAX_AGE = 320
 LOG_FILENAME = 'logs/cache.log'
 logging.basicConfig(filename=LOG_FILENAME, filemode='w',level=logging.DEBUG)
 logger = logging.getLogger(__name__)
