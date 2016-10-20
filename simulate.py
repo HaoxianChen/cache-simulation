@@ -37,7 +37,6 @@ value = np.ones(MAX_AGE,dtype=float)
 value[0] = 0
 # value[d1] = -2
 # value[d2] = -1
-
 array1= range(0,x1)
 array2 = range(x1,x1+x2)
 array3 = range(x1+x2,x1+x2+x3)
@@ -62,7 +61,74 @@ def weighted_choice(weights):
             return i
 
 for j,s in enumerate(cache_size):
+    for pid,p in enumerate(policies):
+        if pid !=0: continue
+        cache = Cache(s,p)
+        a_counter1 = 0
+        a_counter2 = 0
+        a_counter3 = 0
+        for i in range(iterate_times):
+            # simulate data access
+            if i % 10 < 10*p1:
+                k = 0
+            else:
+                k = 1
+#            elif i % 10 >= 10*p1 and i % 10 < 10*(p1+p2):
+#                k = 1
+#            elif i % 10 >= 10*(p1+p2): 
+#                k = 2
+                
+            if k == 0:
+                addr = array1[a_counter1 % len(array1)]
+                a_counter1 += 1
+            elif k == 1:
+                addr = array2[a_counter2 % len(array2)]
+                a_counter2 += 1
+            elif k == 2:
+                addr = array3[a_counter3 % len(array3)]
+                a_counter3 += 1
+                
+            cache.lookup(addr)
+        miss_rate[j] = 1-cache.get_hit_rate()
+        print 'policy ' + str(pid) + ' miss rate:' + str(miss_rate[j])
 
+        # log hit age and eviction age distribution
+        event_sum = sum(cache.get_hit_ages()) + sum(cache.get_evict_ages())
+        hit_distribution = [float(a)/event_sum for a in cache.get_hit_ages()]
+        evict_distribution = [float(a)/event_sum for a in cache.get_evict_ages()]
+        f.write(str(s)+'\n')
+        for a,h in enumerate(hit_distribution):
+            #if h > 0: print 'hit rate at age ' + str(a) + '= ' + str(h)
+            f.write(str(a)+' ')
+        f.write('\n')
+        for a,e in enumerate(evict_distribution):
+            #if e > 0: print 'evict rate at age ' + str(a) + '= ' + str(e)
+            f.write(str(a)+' ')
+        f.write('\n')
+# 
+#         # log age values
+#         for v in value:
+#             f.write(str(v)+' ')
+#         f.write('\n')
+# 
+# 
+# # log miss rate curve
+# for s in cache_size:
+#     f.write(str(s)+' ')
+# f.write('\n')
+# for r in miss_rate.tolist():
+#     f.write(str(r)+' ')
+# f.write('\n')
+# 
+# # log test spec
+# f.write( "x1: " + str(x1))
+# f.write( "x2: " + str(x2))
+# f.write( "x3: " + str(x3))
+# f.write( "p1: " + str(p1))
+# f.write( "p2: " + str(p2))
+# f.write( "p3: " + str(p3))
+
+<<<<<<< HEAD
     cache = Cache(s,value)
     a_counter1 = 0
     a_counter2 = 0
