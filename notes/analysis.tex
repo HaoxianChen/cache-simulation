@@ -1,146 +1,19 @@
 \documentclass[12pt, letterpaper]{article}
 \usepackage{graphicx}
 \usepackage{amsmath}
+\usepackage{soul}
+\usepackage{float}
+\usepackage{graphicx}
+\graphicspath{ {../graphs/} }
 
-\title{bimodal analysis}
+
+\title{Trimodal analysis}
 \author{Brandon Chen}
 
 \begin{document}
 \maketitle
 
-\section{Bimodal}
 
-Bimodal: application scans two arrays simultaneously.
-
-\begin{itemize}
-\item $x_1$: size of array 1
-\item $x_2$: size of array 2
-\item $p$: probability of access array 1
-\item $1-p$: probability of access array 2
-\item $d_1 = \frac{x_1}{p}$: reuse distance for data in array 1
-\item $d_2 = \frac{x_2}{1-p}$: reuse distance for data in array 2
-\item $ed = p d_1 + (1-p) d_2$: expected reuse distance, equals the size of
-working set 
-\item S: cache size
-\item m: miss rate
-\end{itemize}
-
-The relation between cache size and miss rate:
-\begin{equation}
-S = \sum a [H(a) + E(a)]
-\end{equation}
-
-\subsection{Policy Analysis}
-
-\subsubsection{evict at the age of 0}
-\begin{equation}
-S = (1-m) \times ed
-\end{equation}
-
-\subsubsection{evict at the age of $d_1$}
-
-\begin{equation}
-\begin{gathered}
-S = m \times d_1 + p \times d_1 + (1-p-m) \times d_2 \\
-m = \frac{ed - S}{d_2-d_1}
-\end{gathered}
-\end{equation}
-
-\subsubsection{first evict at 0, then evict d1}
-First evict at age 0, then evict $d_1$ if there appears. If no d1 candidates,
-keep evicting 0. So hits only happen at $d_1$.
-
-Here we use $x$ to denote candidates who make it to the age of d1. Hits only
-happen at age $d_1$ means: $px = 1-m$.
-\begin{equation}
-\begin{gathered}
-S = (1-m) d_1 + (1-p) x d_1 \\
-m = 1 - \frac{pS}{d_1}
-\end{gathered}
-\end{equation}
-
-\section{Trimodal}
-
-Trimodal: application scans three arrays simultaneously.
-
-\begin{itemize}
-\item $x_1$: size of array 1
-\item $x_2$: size of array 2
-\item $x_3$: size of array 3
-\item $p_1$: probability of access array 1
-\item $p_2$: probability of access array 2
-\item $p_3$: probability of access array 3
-\item $d_1 = \frac{x_1}{p_1}$: reuse distance for data in array 1
-\item $d_2 = \frac{x_2}{p_2}$: reuse distance for data in array 2
-\item $d_3 = \frac{x_3}{p_3}$: reuse distance for data in array 3
-\item $ed = p d_1 + p_2 d_2 + p_3 d_3 $: expected reuse distance, equals the
-size of working set 
-\item S: cache size
-\item m: miss rate
-\end{itemize}
-
-The relation between cache size and miss rate:
-\begin{equation}
-S = \sum a [H(a) + E(a)]
-\end{equation}
-
-\subsection{Policy Analysis}
-
-\subsubsection{Evict at d1, then 0}
-\label{sec:d1-0}
-
-Let x denotes the fraction of candidates that make it to the age of $d_1$.
-
-When $0<S<d_1$, hits only happen at $d_1$. 
-
-\begin{center}
-\begin{tabular}{ c | c c c c }
-\hline
- 		& d1  & d2 & d3\\ 
-\hline
- hit 	& 1-m & &\\  
- evict 	& $(1-p_1)x$   & &\\
-\hline
-\end{tabular}
-\end{center}
-
-\begin{equation}
-\begin{gathered}
-S = (1-p_1)xd_1 + p_1 x d_1 \\
-p_1 x = 1 - m \\
-m = 1 - \frac{p_1 S}{d_1}
-\end{gathered}
-\end{equation}
-
-When $d_1<S< x_1 + x_2$, the policy can always evict at $d_1$, and either hit at $d_1$
-or $d_2$. 
-\begin{center}
-\begin{tabular}{ c | c c c c }
-\hline
-      & d1    & d2 & d3\\ 
-\hline 
-hit   & $p_1$ & $(1-m-p_1)$ &\\
-evict & m   & & \\
-\hline 
-\end{tabular}
-\end{center}
-
-\begin{equation}
-m = \frac{p_1 d_1 + (1-p_1) d_2 - S}{d_2 - d_1}
-\end{equation}
-
-When $ x_1 + x_2 < S $ 
-
-\subsubsection{Evict at d2, then d1, then 0}
-
-When $0<S<d_1$, policy will do the same thing as described in
-section~\ref{sec:d1-0}. 
-
-Confirmed by simulation.
-
-When $d_1<S<d<2$, will always end up having candidates at $d_1$?
-
-\subsubsection{Evict at d2, then 0}
-\subsubsection{Evict at d1, then d2, then 0}
+\include{trimodal}
 
 \end{document}

@@ -1,0 +1,45 @@
+\section{Bimodal}
+
+Bimodal: application scans two arrays simultaneously.
+
+\begin{itemize}
+\item $x_1$: size of array 1
+\item $x_2$: size of array 2
+\item $p$: probability of access array 1
+\item $1-p$: probability of access array 2
+\item $d_1 = \frac{x_1}{p}$: reuse distance for data in array 1
+\item $d_2 = \frac{x_2}{1-p}$: reuse distance for data in array 2
+\item $ed = p d_1 + (1-p) d_2$: expected reuse distance, equals the size of
+working set 
+\item S: cache size
+\item m: miss rate
+\end{itemize}
+
+The relation between cache size and miss rate:
+\begin{equation}
+S = \sum a [H(a) + E(a)]
+\end{equation}
+
+\subsection{Policy Analysis}
+
+\subsubsection{evict at the age of 0}
+
+\begin{equation}
+1-m = \frac{p_1 S}{d_1} + \frac{p_2 S}{d_2}
+\end{equation}
+
+\subsubsection{evict at the age of $d_1$}
+
+\begin{equation}
+\begin{gathered}
+S = m \times d_1 + p \times d_1 + (1-p-m) \times d_2 \\
+m = \frac{ed - S}{d_2-d_1}
+\end{gathered}
+\end{equation}
+
+\subsubsection{first evict at 0, then evict d1}
+First evict at age 0, then evict $d_1$ if there appears. If no d1 candidates,
+keep evicting 0. So hits only happen at $d_1$.
+
+Here we use $x$ to denote candidates who make it to the age of d1. Hits only
+happen at age $d_1$ means: \st{$px = 1-m$}.

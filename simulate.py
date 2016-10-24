@@ -69,7 +69,7 @@ for j,s in enumerate(cache_size):
         a_counter3 = 0
         for i in range(iterate_times):
             # simulate data access
-            if i % 10 < 10*p1:
+            if i % 2 == 0:
                 k = 0
             else:
                 k = 1
@@ -98,11 +98,11 @@ for j,s in enumerate(cache_size):
         evict_distribution = [float(a)/event_sum for a in cache.get_evict_ages()]
         f.write(str(s)+'\n')
         for a,h in enumerate(hit_distribution):
-            #if h > 0: print 'hit rate at age ' + str(a) + '= ' + str(h)
+            if h > 0: print 'hit rate at age ' + str(a) + '= ' + str(h)
             f.write(str(a)+' ')
         f.write('\n')
         for a,e in enumerate(evict_distribution):
-            #if e > 0: print 'evict rate at age ' + str(a) + '= ' + str(e)
+            if e > 0: print 'evict rate at age ' + str(a) + '= ' + str(e)
             f.write(str(a)+' ')
         f.write('\n')
 # 
