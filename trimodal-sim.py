@@ -15,12 +15,18 @@ sizes', default = 4)
 args = parser.parse_args()
 
 # simulation parameters
-x1 = 4 # size of array 1
+x1 = 8 # size of array 1
 x2 = 16 # size of array 2
 x3 = 32 # size of array 3
-d1 = x1*3
-d2 = x2*3
-d3 = x3*3
+is_iter_policy = False
+d1 = x1 * 3
+d2 = x2 * 3
+d3 = x3 * 3
+ed = x1 + x2 + x3
+print 'd1= ' + str(d1)
+print 'd2= ' + str(d2)
+print 'd3= ' + str(d3)
+print 'ed= ' + str(ed)
 
 iterate_times = 1000
 
@@ -76,14 +82,20 @@ def weighted_choice(weights):
 
 for j,s in enumerate(cache_size):
     for pid,p in enumerate(policies):
-        if pid != 1: continue
+        if pid!=0 and not is_iter_policy:   continue
         cache = Cache(s,p)
         a_counter1 = 0
         a_counter2 = 0
         a_counter3 = 0
         for i in range(iterate_times):
             # simulate data access
-            k = i % 3
+            if i % 3 == 0:
+                k = weighted_choice([200,1,1])
+            elif i % 3 == 1:
+                k = weighted_choice([1,200,1])
+            elif i % 3 == 2:
+                k = weighted_choice([1,1,200])
+
             if k == 0:
                 addr = array1[a_counter1 % len(array1)]
                 a_counter1 += 1
@@ -100,16 +112,18 @@ for j,s in enumerate(cache_size):
 
         # log hit age and eviction age distribution
         event_sum = sum(cache.get_hit_ages()) + sum(cache.get_evict_ages())
-        hit_distribution = [float(a)/event_sum for a in cache.get_hit_ages()]
+#        hit_distribution = [float(a)/event_sum for a in cache.get_hit_ages()]
+        hit_distribution = [float(a)/sum(cache.get_hit_ages()) for a in cache.get_hit_ages()]
+
         evict_distribution = [float(a)/event_sum for a in cache.get_evict_ages()]
         f.write(str(s)+'\n')
         for a,h in enumerate(hit_distribution):
-            if h > 0: print 'hit rate at age ' + str(a) + '= ' + str(h)
-            f.write(str(a)+' ')
+            # if h > 0: print 'hit rate at age ' + str(a) + '= ' + str(h)
+            f.write(str(h)+' ')
         f.write('\n')
         for a,e in enumerate(evict_distribution):
-            if e > 0: print 'evict rate at age ' + str(a) + '= ' + str(e)
-            f.write(str(a)+' ')
+            # if e > 0: print 'evict rate at age ' + str(a) + '= ' + str(e)
+            f.write(str(e)+' ')
         f.write('\n')
 #         plt.subplot(4,2,pid*2+1)
 #         plt.plot(hit_distribution)

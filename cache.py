@@ -2,7 +2,7 @@ import numpy as np
 import logging
 import random
 
-MAX_AGE = 320
+MAX_AGE = 330
 LOG_FILENAME = 'logs/cache.log'
 logging.basicConfig(filename=LOG_FILENAME, filemode='w',level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -47,6 +47,7 @@ class Cache:
             # if cache is already full, evict a candidate
             victim_age = self.evict()
             logger.info('evicted candidate at age: ' + str(victim_age))
+            if victim_age == 0: self.log_data()
             if victim_age < len(self.evict_ages):
                 self.evict_ages[victim_age] += 1
         else:

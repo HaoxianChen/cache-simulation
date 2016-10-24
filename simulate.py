@@ -16,10 +16,10 @@ args = parser.parse_args()
 
 # simulation parameters
 x1 = 8 # size of array 1
-x2 = 12 # size of array 2
+x2 = 16 # size of array 2
 x3 = 24 # size of array 3
-p1 = 0.6 # probability of accessing array 1
-p2 = 0.4 # probability of accessing array 2
+p1 = 0.5 # probability of accessing array 1
+p2 = 0.5 # probability of accessing array 2
 p3 = 1  # probability of accessing array 3
 ed = x1 + x2 + x3 # overall expected reuse distance: the working set size, also equals
 # assert p3 > 0
@@ -97,7 +97,7 @@ for j,s in enumerate(cache_size):
         a_counter3 = 0
         for i in range(iterate_times):
             # simulate data access
-            if i % 10 < 10*p1:
+            if i % 2 == 0:
                 k = 0
             else:
                 k = 1
@@ -126,11 +126,11 @@ for j,s in enumerate(cache_size):
         evict_distribution = [float(a)/event_sum for a in cache.get_evict_ages()]
         f.write(str(s)+'\n')
         for a,h in enumerate(hit_distribution):
-            #if h > 0: print 'hit rate at age ' + str(a) + '= ' + str(h)
+            if h > 0: print 'hit rate at age ' + str(a) + '= ' + str(h)
             f.write(str(a)+' ')
         f.write('\n')
         for a,e in enumerate(evict_distribution):
-            #if e > 0: print 'evict rate at age ' + str(a) + '= ' + str(e)
+            if e > 0: print 'evict rate at age ' + str(a) + '= ' + str(e)
             f.write(str(a)+' ')
         f.write('\n')
 # 
