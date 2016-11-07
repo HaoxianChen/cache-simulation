@@ -278,57 +278,57 @@ class TraceDistribution(Trace):
         print "Average error:", 1. * error / size
         print "Histogram weight:", 1. * np.sum(self.rdDist) / len(self.trace)
 
-idealRdDist = [(0.25,64),(.25,192),(.5,512)]
+if __name__ == '__main__':
+
+    idealRdDist = [(0.25,64),(.25,192),(.5,512)]
 
 # trace = TraceScan([p for p,d in idealRdDist], [int(p*d+0.5) for p,d in idealRdDist])
 # trace.generate(100000)
 
-trace = TraceDistribution(idealRdDist)
-trace.generate(100000)
+    trace = TraceDistribution(idealRdDist)
+    trace.generate(100000)
 
-plt.figure()
-def idealRdDistNonSparse():
-    cump = 0.
-    i = 0
-    rdd = np.zeros_like(trace.rdDist)
-    for d in range(len(rdd)):
-        while i < len(idealRdDist) and idealRdDist[i][1] <= d:
-            cump += idealRdDist[i][0]
-            i += 1
-        rdd[d] = cump * len(trace.trace)
-    return rdd
-plt.plot(idealRdDistNonSparse(), label='Ideal RD dist')
-plt.plot(np.cumsum(trace.rdDist), label='Actual RD dist')
-plt.legend(loc='best')
-plt.show()
+    plt.figure()
+    def idealRdDistNonSparse():
+        cump = 0.
+        i = 0
+        rdd = np.zeros_like(trace.rdDist)
+        for d in range(len(rdd)):
+            while i < len(idealRdDist) and idealRdDist[i][1] <= d:
+                cump += idealRdDist[i][0]
+                i += 1
+            rdd[d] = cump * len(trace.trace)
+        return rdd
+    plt.plot(idealRdDistNonSparse(), label='Ideal RD dist')
+    plt.plot(np.cumsum(trace.rdDist), label='Actual RD dist')
+    plt.legend(loc='best')
+    plt.show()
 
-sizes = range(1, 320, 8)
-hits = np.zeros_like(sizes)
+    sizes = range(1, 320, 8)
+    hits = np.zeros_like(sizes)
 
-for i in range(len(sizes)):
-    cache = MRUCache(sizes[i], allowBypass = False)
-    cache.go(trace)
+    for i in range(len(sizes)):
+        cache = MRUCache(sizes[i], allowBypass = False)
+        cache.go(trace)
 
-    hits[i] = cache.hits
+        hits[i] = cache.hits
 
-    print 'Accesses %s, Hits %s, Evictions %s, Fills %s' % (cache.accesses, cache.hits, cache.evictions, cache.fills)
+        print 'Accesses %s, Hits %s, Evictions %s, Fills %s' % (cache.accesses, cache.hits, cache.evictions, cache.fills)
 
-def modelNathan(size):
-    return size / np.sum( p * d for p,d in idealRdDist )
+    def modelNathan(size):
+        return size / np.sum( p * d for p,d in idealRdDist )
 
-def modelHaoxian(size):
-    return np.sum( p * size / d for p,d in idealRdDist )
+    def modelHaoxian(size):
+        return np.sum( p * size / d for p,d in idealRdDist )
 
-plt.figure()
-plt.plot(sizes, 1. * hits / len(trace.trace), marker='.', label='Simulation')
+    plt.figure()
+    plt.plot(sizes, 1. * hits / len(trace.trace), marker='.', label='Simulation')
 
-sizes = np.arange(max(sizes))
-# plt.plot(sizes, modelNathan(sizes), label=r'$S/E(D)$')
-# plt.plot(sizes, modelHaoxian(sizes), label=r'$\sum_i p_i S / d_i$')
-plt.plot(sizes, modelNathan(sizes), label=r"Nathan's model")
-plt.plot(sizes, modelHaoxian(sizes), label=r"Haoxian's model")
+    sizes = np.arange(max(sizes))
+    plt.plot(sizes, modelNathan(sizes), label=r'$S/E(D)$')
+    plt.plot(sizes, modelHaoxian(sizes), label=r'$\sum_i p_i S / d_i$')
 
-plt.xlim(0,sizes[-1])
-plt.ylim(0,1)
-plt.legend(loc='best')
-plt.show()
+    plt.xlim(0,sizes[-1])
+    plt.ylim(0,1)
+    plt.legend(loc='best')
+    plt.show()
