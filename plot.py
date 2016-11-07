@@ -35,19 +35,19 @@ for i in range(data_len):
         y = np.fromstring(line,dtype=float,sep=' ')
         plt.subplot((data_len*2+1)/2,2,i*2+1)
         plt.subplots_adjust(hspace=.8)
-        plt.plot(y)
+        plt.plot(np.cumsum(y))
         plt.xlabel('age')
         plt.title('hit age distribution at cache size ' +size)
         y2 = np.fromstring(line2,dtype=float,sep=' ')
         plt.subplot((data_len*2+1)/2,2,i*2+2)
         #plot evict age distribution
-#        plt.plot(y2)
+        plt.plot(np.cumsum(y2))
         # plot cumulative sum of hit age distribution instead
-        plt.plot(np.cumsum(y))
+        # plt.plot(np.cumsum(y))
         plt.xlabel('age')
         # eviction age distribution
-#        plt.title('evict age distribution at cache size ' +size)
-        plt.title('cumulative sum of hit age distribution' +size)
+        plt.title('evict age distribution at cache size ' +size)
+        # plt.title('cumulative sum of hit age distribution' +size)
 
     line = f.readline()
     if args.gtype == 'r':

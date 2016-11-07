@@ -9,21 +9,18 @@ import math
 np.set_printoptions(precision=2)
 
 n = 512
-cache_size = 18
-x1 = 8 # size of array 1
-x2 = 28 # size of array 2
-x3 = 32 # size of array 3
-p1 = 0.4
-p2 = 0.4
-p3 = 1 - p1 - p2 # probability of accessing array 3
-d1 = x1 / p1
-d2 = x2 / p2
-d3 = x3 / p3
+cache_size = 20
+d1 = 24
+d2 = 96
+# d3 = 240
+p1 = 0.5
+p2 = 0.5
+# p3 = 1 - p1 - p2
 
 rdd = np.zeros(n)
 rdd[d1] = p1
 rdd[d2] = p2
-rdd[d3] = 1 - p1 - p2
+# rdd[d3] = p3
 ed = np.sum(np.arange(n) * rdd) # expected reuse distance = working set size
 
 # x1 - size of small array
@@ -34,18 +31,32 @@ ed = np.sum(np.arange(n) * rdd) # expected reuse distance = working set size
 #
 # working set size = x1 + x2 = d1 * p + d2 * p = exp(rdd)
 
+def vi_analysis(s):
+    # s: cache size
+    delta_d1 = float(d1*s/ed+1)/float((s+p2)*p1) - p1/p2
+    return delta_d1
+
 def analysis():
     _, (a1, a2) = plt.subplots(2,1)
     a1.set_title('RDD')
     a1.plot(rdd)
 
-    s = np.arange(n)
+    s = np.arange(1,n)
 
     a2.set_title('Miss rate')
-    a2.plot(1. - s / ed, label='Evict @ 0 only')
-    a2.plot(1. - p * s / d1, label='Evict @ 0, then d1')
-    a2.plot((ed - s) / (d2 - d1), label='Evict @ d1')
-    a2.plot(d1, (ed - d1) / (d2 - d1), ls='none', marker='o', label='Can evict @ d1')
+    # when 0<S<d1
+    # a2.plot(1. - (s-1) / (ed-1), label='Evict @ 1 only', marker='.')
+    # a2.plot(1. - p1 * (s-1) / (d1-1), label='Evict @ d1, then 1')
+    # a2.plot(1. - (p1 + p2)*(s-1) / (p1*d1+p2*d2+p3*d2-1), label='Evict @ d2, then 1')
+    # when d1 < S < d2
+    # a2.plot(1. - s/ed , label='Evict @ 0')
+    # a2.plot((ed-s) / ((p2*d2+p3*d3)/(1-p1)-d1), label='Evict @ d1, then 1')
+    # a2.plot(1. - (1-p3)*s/(p1*d1+p2*d2+p3*d2), label='Evict @ d2, then 0')
+    # a2.plot(1. - p1 - p2*(s-d1)/((1-p1)*(d2-d1)), label='Evict @ d2, d1, then 0', marker='.')
+    # when d2 < S
+    a2.plot(1. - s/ed , label='Evict @ 0')
+#     a2.plot((ed-s)/(d3-d2), label='Evict at d2, then 0')
+    a2.plot((1-p1)*(ed-s)/(ed-d1), label='Evict at d1, then 0')
     a2.set_xlim(0,ed)
     a2.set_ylim(0,1)
     a2.legend(loc='best', fontsize=12)
@@ -54,7 +65,7 @@ def analysis():
     plt.close('all')
 
 if __name__ == '__main__':
-    # analysis()
+    analysis()
 
     # we're going to model what happens on a cache of size 20, where the
     # best policy is to evict at d1
@@ -74,10 +85,10 @@ if __name__ == '__main__':
     # e[d1] = 1 - hitrate
 
     # evict at zero
-    h[d1] = p1 * s / d1
-    h[d2] = p2 * s / d2
-    h[d3] = p3 * s / d3
-    hitrate = h[d1] + h[d2] + h[d3]
+    h[d1] = p1 * (s) / (ed)
+    h[d2] = p2 * (s) / (ed)
+    # h[d3] = p3 * (s) / (ed) 
+    hitrate = h[d1] + h[d2] # + h[d3]
     e[0] = 1 - hitrate
 
     # Smoothing of evictions...
@@ -92,12 +103,6 @@ if __name__ == '__main__':
     cumevents = np.cumsum((h+e)[::-1])[::-1]
     cumevents = np.where(cumevents < 1e-5, np.ones_like(cumevents), cumevents)
 
-    # plt.figure()
-    # plt.plot(np.cumsum(h))
-    # plt.plot(np.cumsum(e))
-    # plt.plot(np.cumsum(h+e))
-    # plt.show()
-
     ages = np.arange(n)
     hitprobability = np.sum(h)
     cachesize = np.sum(ages * (h+e))
@@ -105,6 +110,12 @@ if __name__ == '__main__':
 
     fig = plt.figure(figsize=(6,6))
     ax = fig.add_subplot(1,1,1)
+    slope = (1 + h[d1]) / d2
+    # slope = hitrate/s
+    simple = slope * np.arange(len(rdd))
+    simple[d1:] += 1 - slope * d2
+    simple[d2:] = 0
+    ax.plot(simple)
     line, = ax.plot(v[0])
     plt.ion()
 
@@ -135,15 +146,18 @@ if __name__ == '__main__':
                     this[j] += leftover * (0 + drag * that[j+1])
                     # if j == 47: print 'L', leftover, this[j]
 
-            if this[j] < 0:
-                print i, j
-                print h[j]
-                print j, '%.2f = %.2f / %.2f * (1 + %.2f) + %.2f / %.2f * %.2f + %.2f * %.2f - %.2f / %.2f' % (this[j],
-                                                                                                               h[j], cumevents[j], that[0],
-                                                                                                               e[j], cumevents[j], that[0],
-                                                                                                               leftover, that[j+1],
-                                                                                                               hitprobability, cachesize)
-            assert this[j] >= 0.
+            # minus the offset
+            # this[j] -= that[0]
+
+            # if this[j] < 0:
+            #     print i, j
+            #     print h[j]
+            #     print j, '%.2f = %.2f / %.2f * (1 + %.2f) + %.2f / %.2f * %.2f + %.2f * %.2f - %.2f / %.2f' % (this[j],
+            #                                                                                                    h[j], cumevents[j], that[0],
+            #                                                                                                    e[j], cumevents[j], that[0],
+            #                                                                                                    leftover, that[j+1],
+            #                                                                                                    hitprobability, cachesize)
+            # assert this[j] >= 0.
 
             # if cumevents[j] != 1.0: this[j] += 0.04
             # 0.01305 # 0.0435
@@ -160,14 +174,19 @@ if __name__ == '__main__':
         #                                                                                                        hitprobability, cachesize)
 
         print 'After iteration %d' % i
+        print 'v[2]-v[1] = ' + str(this[2]-this[1])
+        print '(1-m)/s = ' + str(hitrate/s)
+        print 'v[d2] - v[0] = ' + str(this[d2] - this[0])
         # raw_input("Press enter to continue...")
         ax.set_title('After iteration %d' % i)
         yplot = this - this[0]
+        # yplot = this
         line.set_ydata(yplot)
-        ax.set_ylim(np.min(yplot[0:d3]), np.max(yplot[0:d3]))
+        # ax.set_ylim(np.min(yplot[0:d3]), np.max(yplot[0:d3]))
+        ax.set_ylim(np.min(yplot[0:d2]), np.max(yplot[0:d2]))
         ax.relim()
         ax.autoscale_view()
         plt.draw() # tell pyplot data has changed
-        plt.pause(0.00001) # it won't actually redraw until you call pause!!!
+        plt.pause(0.000001) # it won't actually redraw until you call pause!!!
 
     plt.close('all')

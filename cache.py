@@ -7,12 +7,23 @@ LOG_FILENAME = 'logs/cache.log'
 logging.basicConfig(filename=LOG_FILENAME, filemode='w',level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+class Node:
+    def __init__(self,addr):
+        self.age = 0
+        self.addr = addr
+    def __str__(self):
+        return 'addr: ' + str(self.addr) + ' age: ' + str(self.age)
+
 class Cache:
     def __init__(self, size, value ):
         self.size = size
         self.data = []
         self.counter = -1
         self.value = value
+        self.tags = []
+
+        self.evict_candidate = None
+        self.evict_threshold = max(value)
 
         # distributions
         self.hit_ages = np.zeros((MAX_AGE,), dtype=np.int)
@@ -20,66 +31,63 @@ class Cache:
 
     def lookup(self,addr):
         # input: address
-        # output: data
         # also need to update the age, hit, eviction distribution too
-        self.age()
         self.counter += 1
-        logger.debug(str(self.counter) + " access addr:" + str(addr))
-        for n in self.data:
-            if n['addr'] == addr:
-                logger.debug('**hit** at age: ' + str(n['age']) +' **' )
-                if n['age'] < len(self.hit_ages):
-                    self.hit_ages[n['age']] += 1 
-                # the age of hitted cnadicate is reset to 0
-                n['age'] = 0
-                return n['data']
-        return self.update(addr)
+        is_hit = False
+        if self.size == 0: return
 
-    def age(self):
-        # the hitted or evicted candidate's age is being reset to zeor, and all
-        # the rest candidates ages by +1.
-        for n in self.data:
-            n['age'] += 1
-        return
+        threshold = self.evict_threshold
+        self.evict_candidate = None
+        # logger.debug(str(self.counter) + " access addr:" + str(addr))
+        for i,node in enumerate(self.data):
+            node.age += 1
+            if node.age < MAX_AGE:
+                value = self.value[node.age] 
+            else:
+                value = 0
+            if value < self.evict_threshold and value < threshold:
+                self.evict_candidate = i
+                threshold = value
+            if node.addr == addr:
+                # hit
+                is_hit = True
+                # logger.debug('**hit** at age: ' + str(node.age) +' **' )
+                if node.age < len(self.hit_ages):
+                    self.hit_ages[node.age] += 1 
+                # the age of hitted cnadicate is reset to 0
+                node.age = 0
+        if not is_hit:
+            self.update(addr)
     
     def update(self,addr):
         if len(self.data) == self.size:
             # if cache is already full, evict a candidate
-            victim_age = self.evict()
-            logger.info('evicted candidate at age: ' + str(victim_age))
-            if victim_age == 0: self.log_data()
+            victim_age = self.evict(addr)
+            logger.info('evicted at age: ' + str(victim_age))
+            # if victim_age == 0: self.log_data()
             if victim_age < len(self.evict_ages):
                 self.evict_ages[victim_age] += 1
-        else:
-            logger.info('compulsory miss')
 
-        if len(self.data) < self.size:
-            new_node = {}
-            new_node['addr'] = addr
-            new_node['data'] = random.randint(0,100)
-            new_node['age'] = 0
+        elif len(self.data) < self.size:
+            # compulsory miss
+            new_node = Node(addr)
             self.data.append(new_node)
 
-
-    def evict(self):
-        # given the values of each age, evict the age of lowest value
-        is_evicted = False
-        local_values = list(self.value)
-        while not is_evicted:
-            victim_age = random.choice([i for i,x in enumerate(local_values) if x == min(local_values)])
-            if victim_age == 0:
-                # just don't cache the accessing data
-                is_evicted = True
-            for n in self.data:
-                if n['age'] == victim_age:
-                    self.data.remove(n)
-                    is_evicted = True
-                elif n['age'] > MAX_AGE:
-                    self.data.remove(n)
-                    is_evicted = True
-                    victim_age =  n['age']
-            # if candidate not found, search the next available candidate
-            local_values[victim_age] = max(local_values) + 1
+    def evict(self,addr):
+        candidate = 0
+        if self.evict_candidate != None and self.evict_candidate < self.size: 
+            victim_age = self.data[self.evict_candidate].age
+            candidate = self.evict_candidate
+            # logger.info('found candidate at age: ' + str(victim_age))
+        else:
+            # randomly evict
+            candidate = random.randrange(0,len(self.data),1)
+            victim_age = self.data[candidate].age
+            # logger.info('randomly evict at age: ' + str(victim_age))
+            self.log_data()
+        self.data[candidate].addr = addr
+        self.data[candidate].age = 0
+        assert len(self.data) == self.size
         return victim_age
 
     def get_hit_ages(self):
