@@ -18,7 +18,12 @@ if __name__ == '__main__':
     p3 = 0.5
     ed = d1*p1 + d2*p2 + d3*p3
     idealRdDist = [(p1,d1),(p2,d2),(p3,d3)]
-    cache_size = np.arange(40,50,3)
+    cache_size = np.arange(44,95,11)
+
+    policy_value = np.arange(MAX_AGE)
+    policy_value[d2:MAX_AGE] -= MAX_AGE
+    policy_value[d1:d2] -= policy_value[d2-1]
+
 
     # trace = mru.TraceScan([p for p,d in idealRdDist], [int(p*d+0.5) for p,d in idealRdDist])
     trace = mru.TraceDistribution(idealRdDist)
@@ -40,10 +45,6 @@ if __name__ == '__main__':
     plt.plot(np.cumsum(trace.rdDist), label='Actual RD dist')
     plt.legend(loc='best')
     plt.show()
-
-    policy_value = np.arange(MAX_AGE)
-    policy_value[d2:MAX_AGE] -= MAX_AGE
-    policy_value[d1:d2] -= policy_value[d2-1]
 
     plt.figure()
     plt.plot(policy_value)

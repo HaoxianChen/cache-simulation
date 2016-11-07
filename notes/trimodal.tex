@@ -37,9 +37,7 @@ The relation between cache size and miss rate:
 S = \sum a [H(a) + E(a)]
 \end{equation}
 
-\subsection{Cache behaviors with size smaller d1}
-
-\subsubsection{evict at 0 (MRU)}
+\subsection{evict at 0 (MRU)}
 
 \begin{figure}[H]
 \centering
@@ -59,7 +57,7 @@ m = 1 - \frac{S}{ed}
 \caption{simulation result}
 \end{figure}
 
-\subsubsection{evict at d1}
+\subsection{evict at d1}
 
 \begin{figure}[H]
 \centering
@@ -67,13 +65,15 @@ m = 1 - \frac{S}{ed}
 \caption{policy: evict candidate at age d1}
 \end{figure}
 
-\begin{equation}
-\begin{aligned}
-m = 1 - p_1 \frac{S}{d_1}
-\end{aligned}
-\end{equation}
+\[
+m = \left\{\begin{array}{lr}
+      1-p_1 \frac{S}{d_1}, & \text{for } 0 \leq S \leq d_1 \\
+      (1-p_1) \frac{ed-S}{ed-d_1}, & \text{for } d_1 \leq S \leq ed
+           \end{array}
+\]
 
-\subsubsection{evict at d2, then 0}
+
+\subsection{evict at d2, then 0}
 
 \begin{figure}[H]
 \centering
