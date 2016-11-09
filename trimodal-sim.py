@@ -6,6 +6,7 @@ import datetime
 import logging
 import argparse
 import mru
+import compressedMDP as cmdp
 from cache import *
 
 if __name__ == '__main__':
@@ -18,12 +19,11 @@ if __name__ == '__main__':
     p3 = 0.5
     ed = d1*p1 + d2*p2 + d3*p3
     idealRdDist = [(p1,d1),(p2,d2),(p3,d3)]
-    cache_size = np.arange(44,95,11)
+    cache_size = np.arange(1,ed,14)
 
     policy_value = np.arange(MAX_AGE)
     policy_value[d2:MAX_AGE] -= MAX_AGE
-    policy_value[d1:d2] -= policy_value[d2-1]
-
+    # policy_value[d1:d2] -= policy_value[d2-1]
 
     # trace = mru.TraceScan([p for p,d in idealRdDist], [int(p*d+0.5) for p,d in idealRdDist])
     trace = mru.TraceDistribution(idealRdDist)
@@ -75,15 +75,8 @@ if __name__ == '__main__':
 
     if len(cache_size) >1:
         plt.figure()
-        # plt.plot(cache_size, 1. - (cache_size) / (ed), label='Evict @ 0 only')
-        # plt.plot(cache_size, 1. - (p1 * (cache_size)) / (d1), label='Evict @ d1, then 1')
-        # when d1 < S < d2
-        # plt.plot(cache_size, (ed-cache_size) / ((p2*d2+p3*d3)/(1-p1)-d1), label='Evict @ d1, then 1')
-        # plt.plot(cache_size, 1-(1-p3)*cache_size/(p1*d1+p2*d2+p3*d2), label='Evict @ d2, then 0')
-        plt.plot(cache_size, 1-p1-p2*(cache_size-d1)/((1-p1)*d2-d1), label='Evict @ d2, d1, then 0')
-        # when d2 < S
-        # plt.plot(cache_size, (ed-cache_size)/(d3-d2), label='Evict at d2, then 0')
-        # plt.plot(cache_size, (1-p1)*(ed-cache_size)/(ed-d1), label='Evict at d1, then 0')
+        analyse_miss_rate = [cmdp.miss_rate_d2([p1,p2,p3],[d1,d2,d3],s) for s in cache_size]
+        plt.plot(cache_size, analyse_miss_rate, label='Evict at d2, then 0')
         plt.plot(cache_size,miss_rate, label='simulation')
         plt.legend(loc='best')
         plt.ylim(0,1)

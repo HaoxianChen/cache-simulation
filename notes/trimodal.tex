@@ -45,6 +45,19 @@ S = \sum a [H(a) + E(a)]
 \caption{policy: mru}
 \end{figure}
 
+\begin{table}[H]
+\begin{center}
+\begin{tabular}{c|c c c c}
+\hline
+ & 0 & d1 & d2 & d3 \\
+ \hline
+hit & & $p_1 (1-m)$ & $p_2(1-m)$ & $p_3(1-m)$ \\
+evict & m & & & 
+\end{tabular}
+\caption{events distribution when $0<S<d1$}
+\end{center}
+\end{table}
+
 \begin{equation}
 \begin{aligned}
 m = 1 - \frac{S}{ed}
@@ -65,11 +78,39 @@ m = 1 - \frac{S}{ed}
 \caption{policy: evict candidate at age d1}
 \end{figure}
 
+\begin{table}[H]
+\begin{center}
+\begin{tabular}{c|c c c c}
+\hline
+ & 0 & d1 & d2 & d3 \\
+ \hline
+hit & & $p_1 x$ & \\
+evict & 1-x & $(1-p_1) x$ & \\
+\end{tabular}
+\caption{events distribution when $0<S<d1$}
+\end{center}
+\end{table}
+
+\begin{table}[H]
+\begin{center}
+\begin{tabular}{c | c c c c}
+\hline
+events & 1 & d1 & d2 & d3 \\
+\hline
+hit & & p1 & $\frac{p_2}{1-p_1} (1-m) $ & $\frac{p_3}{1-p_1} (1-m)$ \\
+evict & & m & & \\
+\hline
+\end{tabular}
+\caption{events distribution when $S>d_1$}
+\end{center}
+\end{table}
+
 \[
 m = \left\{\begin{array}{lr}
       1-p_1 \frac{S}{d_1}, & \text{for } 0 \leq S \leq d_1 \\
       (1-p_1) \frac{ed-S}{ed-d_1}, & \text{for } d_1 \leq S \leq ed
            \end{array}
+           \right.
 \]
 
 
@@ -83,46 +124,7 @@ m = \left\{\begin{array}{lr}
 
 Let x denote fraction of candidates who make it to the age of d1.
 
-\subsection{Cache behaviors with size between d1 and d2}
-
-\subsubsection{evict at d1}
-\label{sec:policyd1}
-
-
-\begin{center}
-\begin{tabular}{c | c c c c}
-\hline
-events & 1 & d1 & d2 & d3 \\
-\hline
-hit & & p1 & $p_2 (1-\frac{m}{1-p_1}) $ & $p_3(1-\frac{m}{1-p_1}) $ \\
-evict & & m & & \\
-\hline
-\end{tabular}
-\end{center}
-
-\begin{equation}
-\begin{aligned}
-m = \frac{ed-S}{\frac{p_2}{1-p_1} d_2 + \frac{p_3}{1-p_1} d_3 - d_1}
-= (1-p_1) \frac{ed-S}{ed-d_1}
-\end{aligned}
-\end{equation}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.5\textwidth]{sim_d1.png}
-\caption{simulation result}
-\end{figure}
-
-\subsubsection{evict at d2, then 0}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.5\textwidth]{evict_d2.png}
-\caption{replacement policy in value function}
-\end{figure}
-
-Let x denote fraction of candidates who make it to the age of d1.
-
+\begin{table}[H]
 \begin{center}
 \begin{tabular}{c | c c c c}
 \hline
@@ -131,21 +133,33 @@ events & 1 & d1 & d2 & d3 \\
 hit & & $p_1 x$ & $p_2 x$ &  \\
 evict & 1-x & & $p_3 x$ & 
 \end{tabular}
+\caption{events distribution when $S<d_2$}
 \end{center}
+\end{table}
 
-\begin{equation}
-\begin{aligned}
-m = 1 - (1-p_3) \frac{S}{p_1 d_1 + p_2 d_2 + p_3 d_2}
-\end{aligned}
-\end{equation}
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.5\textwidth]{sim_d2.png}
-\caption{simulation result}
-\end{figure}
+\begin{table}[H]
+\begin{center}
+\begin{tabular}{c | c c c c}
+\hline
+events & 0 & d1 & d2 & d3 \\
+\hline
+hit & & $p_1$ & $p_2$ & $p_3-m$ \\
+evict & & & m & 
+\end{tabular}
+\caption{events distribution when $S > d_2$}
+\end{center}
+\end{table}
 
-\subsubsection{evict at d2, d1, then 0}
+\[
+m = \left\{\begin{array}{lr}
+      1-(1-p_3) \frac{S}{p_1 d_1 + (1-p_1) d_2}, & \text{for } 0 \leq S \leq d_2 \\
+      \frac{ed-S}{d_3-d_2}, & \text{for } d_2 < S < ed
+           \end{array}
+           \right.
+\]
+
+\subsection{Evict at d2, d1, then 0}
 
 \begin{figure}[H]
 \centering
@@ -155,91 +169,116 @@ m = 1 - (1-p_3) \frac{S}{p_1 d_1 + p_2 d_2 + p_3 d_2}
 
 Let x denote fraction of candidates who make it to the age of d1.
 
+\begin{table}[H]
 \begin{center}
-\begin{tabular}{c | c c c c}
+\begin{tabular}{c|c c c c}
 \hline
-events & 1 & d1 & d2 & d3 \\
-\hline
-hit & & $p_1 x$ & $p_2 x$ &  \\
-evict & & 1-x & $p_3 x$ & 
+ & 0 & d1 & d2 & d3 \\
+ \hline
+hit & & $p_1 x$ & \\
+evict & 1-x & $(1-p_1) x$ & \\
 \end{tabular}
+\caption{events distribution when $0<S<d1$}
 \end{center}
+\end{table}
 
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.5\textwidth]{sim_d2_d1.png}
-\caption{simulation result}
-\end{figure}
-
-\subsubsection{evict at d1, d2, then 0}
-
-Just behave identical to policy~\ref{sec:policyd1}.
-
-\subsection{Cache behaviors larger then d2}
-
-\subsubsection{evict at d1, then 0}
-
+\begin{table}[H]
 \begin{center}
-\begin{tabular}{c | c c c c}
+\begin{tabular}{c|c c c c}
 \hline
-events & 0 & d1 & d2 & d3 \\
-\hline
-hit & & $p_1$& $p_2$ & $p_3-m$ \\
-evict & & m &  & 
+ & 0 & d1 & d2 & d3 \\
+ \hline
+hit & & $p_1$ & $\frac{p_2}{1-p_1}x$ &\\
+evict & & $1-x-p_1$ & $\frac{p_3}{1-p_1}x$ & \\
 \end{tabular}
+\caption{events distribution when $d_1<S<d_2$}
 \end{center}
+\end{table}
 
-\begin{equation}
-\begin{aligned}
-m  = (1-p_1) \frac{ed - S}{ed - d_1}
-\end{aligned}
-\end{equation}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.5\textwidth]{sim_d1_3.png}
-\caption{simulation result}
-\end{figure}
-
-\subsubsection{evict at d2, then 0}
-
+\begin{table}[H]
 \begin{center}
-\begin{tabular}{c | c c c c}
+\begin{tabular}{c|c c c c}
 \hline
-events & 0 & d1 & d2 & d3 \\
-\hline
-hit & & $p_1$& $p_2$ & $p_3-m$ \\
-evict & &  & m & 
+ & 0 & d1 & d2 & d3 \\
+ \hline
+hit & & $p_1$ & $p_2$ & $p_3-m$ \\
+evict & & & m & \\
 \end{tabular}
+\caption{events distribution when $S>d_2$}
 \end{center}
+\end{table}
 
-\begin{equation}
-\begin{aligned}
-m  = \frac{ed - S}{d_3 - d_2}
-\end{aligned}
-\end{equation}
-
-\begin{figure}[H]
-\centering
-\includegraphics[width=0.5\textwidth]{sim_d2_3.png}
-\caption{simulation result}
-\end{figure}
+\[
+m = \left\{\begin{array}{lr}
+      1-p_1\frac{S}{d_1}, & \text{for } 0 < S < d_1 \\
+      1-p_1-p_2\frac{S-d_1}{(1-p_1)(d_2-d_1)}, & \text{for } d_1 \leq S \leq d_2 \\
+      \frac{ed-S}{d_3-d_2}, & \text{for } d_2 < S < ed
+           \end{array}
+           \right.
+\]
 
 \section{Solving MDP with analytical approach}
 
-when $0<a<d_1$:
+First we want to have incremental relationship in $\Delta$ space: $\Delta V_a = V_a - V_0$.
+
+According to the value iteration update algorithm:
 \begin{equation}
 \begin{aligned}
-v[a]-v[0] = [(a-1)(1-m)+1][v[1]-v[0]]
+V_a' = h_a (1+V_0) + e_a V_0 + l_a V_{a+1} \\
+V_0' = h_0 (1+V_0) + e_0 V_0 + l_0 V_1 \\
 \end{aligned}
 \end{equation}
 
-when $a=d_1+1$:
+When converge, we have $V_a' - V_0' = V_a - V_0 $, that is:
+
 \begin{equation}
 \begin{aligned}
-v[d_1+1]-v[0] = \frac{d_1 (1-m)+1}{1-P_{H}(d_1)}(v[1]-v[0]) - \frac{P_{H}(1-d_1)}{1-P_{H}(d_1)}
+\Delta V_a & = V_a' - V_0' \\
+ & = l_a \Delta V_{a+1} - l_0 \Delta V_1 + h_a - h_0
 \end{aligned}
 \end{equation}
+
+Here $l_a$ denotes the leftover probability at age a, that is, $l_a = 1- h_a -
+e_a$.
+
+At smooth regions where $h_a = 0$ and $e_a = 0$, we have the slope:
+\begin{equation}
+\begin{aligned}
+k & = \Delta V_{a+1} - \Delta V_a \\
+& = l_0 \Delta V_1 + h_0
+\end{aligned}
+\end{equation}
+
+\subsection{solving MDP in bimodal}
+
+In bomal, the domain is $[0,d_2]$. Therefore, at age $d_2$, the modal has this property:
+\begin{equation}
+h_{d_2} + e_{d_2} = 1
+\end{equation}
+
+So $d_2$ is a critical point where:
+\begin{equation}
+\begin{aligned}
+V_{d_2}' & = h_{d_2} V_0 + h_{d_2} + e_{d_2} V_0 \\
+V_0' & = h_0 (1+V_0) + e_0 V_0 + l_0 V_1 \\
+\Delta V_{d_2} & = V_{d_2}' - V_0' \\
+& = h{d_2} - h_0 - l_0 \Delta V_1
+\end{aligned}
+\end{equation}
+
+% when $0<a<d_1$:
+% \begin{equation}
+% \begin{aligned}
+% v[a]-v[0] = [(a-1)(1-m)+1][v[1]-v[0]]
+% \end{aligned}
+% \end{equation}
+% 
+% when $a=d_1+1$:
+% \begin{equation}
+% \begin{aligned}
+% v[d_1+1]-v[0] = \frac{d_1 (1-m)+1}{1-P_{H}(d_1)}(v[1]-v[0]) - \frac{P_{H}(1-d_1)}{1-P_{H}(d_1)}
+% \end{aligned}
+% \end{equation}
 
 % \include{lessons}
 
