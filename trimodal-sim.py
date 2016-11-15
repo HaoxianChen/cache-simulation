@@ -14,12 +14,13 @@ if __name__ == '__main__':
     d1 = 24
     d2 = 96
     d3 = 240
-    p1 = 0.25
-    p2 = 0.25
-    p3 = 0.5
+    p1 = 0.3
+    p2 = 0.3
+    p3 = 1 - p1 - p2
     ed = d1*p1 + d2*p2 + d3*p3
+    assert d2 < ed
     idealRdDist = [(p1,d1),(p2,d2),(p3,d3)]
-    cache_size = np.arange(1,ed,14)
+    cache_size = np.arange(round(d2/(1.+p1)-2),round(d2/(1.+p1))+6,2)
 
     policy_value = np.arange(MAX_AGE)
     policy_value[d2:MAX_AGE] -= MAX_AGE

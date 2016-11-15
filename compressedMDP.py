@@ -48,9 +48,10 @@ def miss_rate_d2(p,d,s):
     [p1,p2,p3] = p
     [d1,d2,d3] = d
     ed = p1*d1 + p2*d2 + p3*d3
-    if s>0 and s<=d2:
-        miss_rate = 1 - (1-p3)*s/(p1*d1+p2*d2+p3*d2)
-    elif s>d2 and s<ed:
+    critical_d = p1*d1 + (1-p1)*d2
+    if s>0 and s<=critical_d:
+        miss_rate = 1. - (1.-p3)*s/(p1*d1+p2*d2+p3*d2)
+    elif s>critical_d and s<ed:
         miss_rate = (ed-s)/(d3-d2)
     else:
         miss_rate = 0
@@ -61,11 +62,12 @@ def miss_rate_d2_d1(p,d,s):
     [p1,p2,p3] = p
     [d1,d2,d3] = d
     ed = p1*d1 + p2*d2 + p3*d3
+    critical_d = p1*d1 + (1-p1)*d2
     if s>0 and s<=d1:
         miss_rate = 1 - p1*s/d1
-    elif s>d1 and s<=d2:
+    elif s>d1 and s<=critical_d:
         miss_rate = 1-p1-p2*(s-d1) / ((1-p1)*(d2-d1))
-    elif s>d2 and s<ed:
+    elif s>critical_d and s<ed:
         miss_rate = (ed-s)/(d3-d2)
     else:
         miss_rate = 0
@@ -124,18 +126,19 @@ def hit_rate_d2(p,d,s):
     [p1,p2,p3] = p
     [d1,d2,d3] = d
     ed = p1*d1 + p2*d2 + p3*d3
+    critical_d = p1*d1 + (1-p1)*d2
 
     h = np.zeros(n)
     e = np.zeros(n)
 
-    if s>0 and s<= d2:
+    if s>0 and s<= critical_d:
         hit_rate = (1. - p3)*s/(p1*d1 + (1-p1)*d2)
         x = hit_rate / (1-p3)
         h[d1] = p1 * x
         h[d2] = p2 * x
         e[0] = 1. - x
         e[d2] = p3 * x
-    elif s>d2 and s<ed:
+    elif s>critical_d and s<ed:
         hit_rate = 1. - (ed-s)/(d3-d2)
         h[d1] = p1
         h[d2] = p2
@@ -153,6 +156,7 @@ def hit_rate_d2_d1(p,d,s):
     [p1,p2,p3] = p
     [d1,d2,d3] = d
     ed = p1*d1 + p2*d2 + p3*d3
+    critical_d = p1*d1 + (1-p1)*d2
 
     h = np.zeros(n)
     e = np.zeros(n)
@@ -163,14 +167,14 @@ def hit_rate_d2_d1(p,d,s):
         h[d1] = p1 * x
         e[0] = 1. - x
         e[d1] = (1-p1) * x
-    elif s>d1 and s<=d2:
+    elif s>d1 and s<=critical_d:
         hit_rate = p1 + p2*(s-d1)/((1-p1)*(d2-d1))
         x = (hit_rate-p1)*(1-p1)/p2
         h[d1] = p1
         h[d2] = p2*x/(1-p1)
         e[d1] = 1-x-p1
         e[d2] = p3*x/(1-p1)
-    elif s>d2 and s<ed:
+    elif s>critical_d and s<ed:
         hit_rate = 1. - (ed-s)/(d3-d2)
         h[d1] = p1
         h[d2] = p2
@@ -247,7 +251,7 @@ def value_iteration(h,e,s,threshold,drag,allow_plot):
 
         if max(delta) < threshold: break
 
-        if i%1 != 0 or not allow_plot: continue
+        if i%50 != 0 or not allow_plot: continue
         ax.set_title('After iteration %d' % i)
         yplot = this - this[0]
         line.set_ydata(yplot)
@@ -261,17 +265,76 @@ def value_iteration(h,e,s,threshold,drag,allow_plot):
     if boundry > d2:
         return np.argsort([this[0],this[d1+1],this[d2+1]])
     elif boundry > d1:
-        return np.argsort([this[0],this[d1+1]])
+        return np.argsort([this[0],this[d1+1],-10])
     else:
-        return 0
+        return [1,0]
+
+def opt_policy(p,d,s):
+    miss_rate = np.zeros(4)
+    miss_rate[0] = miss_rate_mru(p,d,s)
+    miss_rate[1] = miss_rate_d1(p,d,s)
+    miss_rate[2] = miss_rate_d2(p,d,s)
+    miss_rate[3] = miss_rate_d2_d1(p,d,s)
+    if np.argmin(miss_rate) == 0:
+        return [0,],miss_rate[0]
+    elif np.argmin(miss_rate) == 1:
+        return [1,],miss_rate[1]
+    elif np.argmin(miss_rate) == 2:
+        return [2,0,1],miss_rate[2]
+    elif np.argmin(miss_rate) == 3:
+        return [2,1,0],miss_rate[3]
+
+def policy_iteration():
+    cache_size = range(int(ed)+10,0,-10)
+    policy = [0]
+    for s in cache_size:
+
+        [opt,opt_miss_rate] = opt_policy([p1,p2,p3],[d1,d2,d3],s)
+
+        if policy[0] == 0:
+            h,e = hit_rate_mru([p1,p2,p3],[d1,d2,d3],s)
+        elif policy[0] == 1:
+            h,e = hit_rate_d1([p1,p2,p3],[d1,d2,d3],s)
+        elif policy[0] == 2:
+            if policy[1] == 0:
+                h,e = hit_rate_d2([p1,p2,p3],[d1,d2,d3],s)
+            elif policy[1] == 1:
+                h,e = hit_rate_d2_d1([p1,p2,p3],[d1,d2,d3],s)
+            
+        plt.subplot(1,2,1)
+        plt.plot(h)
+        plt.subplot(1,2,2)
+        plt.plot(e)
+        plt.show()
+        policy = value_iteration(h,e,s,1e-3,0.99,True)
+
+        if policy[0] == 0:
+            miss_rate = miss_rate_mru([p1,p2,p3],[d1,d2,d3],s)
+        elif policy[0] == 1:
+            miss_rate = miss_rate_d1([p1,p2,p3],[d1,d2,d3],s)
+        elif policy[0] == 2:
+            if policy[1] == 0:
+                miss_rate = miss_rate_d2([p1,p2,p3],[d1,d2,d3],s)
+            elif policy[1] == 1:
+                miss_rate = miss_rate_d2_d1([p1,p2,p3],[d1,d2,d3],s)
+        print 'size= ' + str(s) 
+        print 'optimal policy: ' + str(opt) + ' miss rate: ' + str(opt_miss_rate)
+        print 'value iteration yields policy: ' + str(policy) + ' miss rate: ' + str(miss_rate)
+
+def fill_rdd(p,d,s):
+    h,e = hit_rate_d1(p,d,s)
+    w = 0.1
+    h = (1-w) * h + w * rdd
+
+    value_iteration(h,e,s,1e-31,1,True)
     
 if __name__ == '__main__':
     n = 512
     d1 = 24
     d2 = 96
     d3 = 240
-    p1 = 0.2
-    p2 = 0.7
+    p1 = 0.4
+    p2 = 0.35
     p3 = 1 - p1 - p2
 
     rdd = np.zeros(n)
@@ -280,18 +343,8 @@ if __name__ == '__main__':
     rdd[d3] = p3
     ed = np.sum(np.arange(n) * rdd) # expected reuse distance = working set size
 
+    assert ed > d2
+
     analysis()
-    s = ed-10
-    h,e = hit_rate_d2([p1,p2,p3],[d1,d2,d3],s)
-
-    print "size = " + str(s)
-    plt.subplot(2,1,1)
-    plt.plot(h)
-    plt.title('hit')
-    plt.subplot(2,1,2)
-    plt.plot(e)
-    plt.title('evict')
-    plt.show()
-
-    policy = value_iteration(h,e,s,1e-4,1,True)
-    print policy
+    # fill_rdd([p1,p2,d2],[d1,d2,d3],20)
+    policy_iteration()
