@@ -32,10 +32,24 @@ size of working set
 \item m: miss rate
 \end{itemize}
 
-The relation between cache size and miss rate:
+The reuse distance distribution would look like:
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.5\textwidth]{rdd}
+\caption{reuse distance distribution}
+\end{figure}
+
+Nathan proposed an awesome cache modeling paper~\cite{beckmann2016modeling}, we
+derive the relationship between cache size and miss rate based on the paper's
+idea:
 \begin{equation}
 S = \sum a [H(a) + E(a)]
 \end{equation}
+
+This means cache size equals the average lifetime. This may not seem obvious.
+Consider every access starts a new lifetime. So the average life time equals to
+the expected interval between two consecutive access on the same cache line,
+which is S.
 
 \subsection{evict at 0 (MRU)}
 
@@ -137,6 +151,8 @@ evict & 1-x & & $p_3 x$ &
 \end{center}
 \end{table}
 
+As cache size grow to some critical point, eviction distribution will change to
+the following.
 
 \begin{table}[H]
 \begin{center}
@@ -153,7 +169,7 @@ evict & & & m &
 
 \[
 m = \left\{\begin{array}{lr}
-      1-(1-p_3) \frac{S}{p_1 d_1 + (1-p_1) d_2}, & \text{for } 0 \leq S \leq d_2 \\
+      1-(1-p_3) \frac{S}{p_1 d_1 + (1-p_1) d_2}, & \text{for } 0 \leq S \leq p_1*d_1 + (1-p_1)*d_1 \\
       \frac{ed-S}{d_3-d_2}, & \text{for } d_2 < S < ed
            \end{array}
            \right.
@@ -266,20 +282,7 @@ V_0' & = h_0 (1+V_0) + e_0 V_0 + l_0 V_1 \\
 \end{aligned}
 \end{equation}
 
-% when $0<a<d_1$:
-% \begin{equation}
-% \begin{aligned}
-% v[a]-v[0] = [(a-1)(1-m)+1][v[1]-v[0]]
-% \end{aligned}
-% \end{equation}
-% 
-% when $a=d_1+1$:
-% \begin{equation}
-% \begin{aligned}
-% v[d_1+1]-v[0] = \frac{d_1 (1-m)+1}{1-P_{H}(d_1)}(v[1]-v[0]) - \frac{P_{H}(1-d_1)}{1-P_{H}(d_1)}
-% \end{aligned}
-% \end{equation}
-
-% \include{lessons}
+\bibliography{main}{}
+\bibliographystyle{plain}
 
 \end{document}
