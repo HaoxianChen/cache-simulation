@@ -12,9 +12,9 @@ def rollDice():
     p3 = p3 / 100.
     p = [p1,p2,p3]
     
-    d1 = random.randint(1,100) 
-    d2 = random.randint(1,100) 
-    d3 = random.randint(1,100)
+    d1 = random.randint(100,500) 
+    d2 = random.randint(100,500) 
+    d3 = random.randint(100,500)
     d = [d1,d2,d3]
     
     order = np.argsort(d)
@@ -38,8 +38,8 @@ if __name__ == '__main__':
         m_analysis =  cmdp.opt_policy(p,d,s)[1]
 
         [h,e] = cmdp.parse_policy([0],p,d,s)[1:3]
-        # policy = cmdp.value_iteration(d,h,e,s,0.99)
-        policy = cmdp.policy_iteration(p,d,s)
+        policy = cmdp.value_iteration(d,h,e,s,0.99)
+        # policy = cmdp.policy_iteration(p,d,s)
         m = cmdp.parse_policy(policy,p,d,s)[0]
 
         if m-m_analysis > 1e-3:

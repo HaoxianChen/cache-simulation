@@ -209,7 +209,7 @@ def analysis():
     plt.close('all')
 
 def value_iteration(d,h,e,s,drag,allow_plot=False):
-    threshold = 1e-4
+    threshold = 1e-3
 
     [d1,d2,d3] = d
     v = np.zeros((2,n))
@@ -232,7 +232,7 @@ def value_iteration(d,h,e,s,drag,allow_plot=False):
         line, = ax.plot(v[0])
         plt.ion()
 
-    for i in range(100000):
+    for i in range(10000):
         this = v[i%2]
         that = v[(i+1)%2]
 
@@ -240,12 +240,10 @@ def value_iteration(d,h,e,s,drag,allow_plot=False):
             this[j] = 0
 
             # hit probability
-            #this[j] += h[j] / cumevents[j] * (1 + drag * that[0])
-            this[j] += h[j] / cumevents[j] * (1 + that[0])
+            this[j] += h[j] / cumevents[j] * (1 + drag * that[0])
 
             # eviction probability
-            # this[j] += e[j] / cumevents[j] * (0 + drag * that[0])
-            this[j] += e[j] / cumevents[j] * (0 + that[0])
+            this[j] += e[j] / cumevents[j] * (0 + drag * that[0])
 
             # otherwise
             if j+1 < n:
@@ -258,7 +256,7 @@ def value_iteration(d,h,e,s,drag,allow_plot=False):
                 delta[j] = abs(this[j]-this[0]-(that[j]-that[0])) 
 
         if max(delta) < threshold: 
-            plt.interactive(False)
+            # plt.interactive(False)
             break
 
         if i%50 != 0 or not allow_plot: continue
@@ -274,9 +272,9 @@ def value_iteration(d,h,e,s,drag,allow_plot=False):
 
 #    print 'boundry=' + str(boundry)
     if boundry > d2:
-        return np.argsort([this[0],this[d1+1],this[d2+1]])
+        return np.argsort([this[1],this[d1+1],this[d2+1]])
     elif boundry > d1:
-        return np.argsort([this[0],this[d1+1],-10])
+        return np.argsort([this[1],this[d1+1],-10])
     else:
         return [1,0]
 
@@ -366,4 +364,4 @@ if __name__ == '__main__':
     [h,e] = parse_policy([0],p,d,s)[1:3]
     print opt_policy(p,d,s)
     print value_iteration(d,h,e,s,drag,True)
-    print policy_iteration(p,d,s,drag)
+    #print policy_iteration(p,d,s,drag)
