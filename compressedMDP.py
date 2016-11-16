@@ -209,6 +209,7 @@ def analysis():
     plt.close('all')
 
 def value_iteration(d,h,e,s,drag,allow_plot=False):
+    allow_log = True
     threshold = 1e-3
 
     [d1,d2,d3] = d
@@ -257,6 +258,8 @@ def value_iteration(d,h,e,s,drag,allow_plot=False):
 
         if max(delta) < threshold: 
             # plt.interactive(False)
+            if allow_log:
+                log_values(this-this[0])
             break
 
         if i%50 != 0 or not allow_plot: continue
@@ -341,14 +344,21 @@ def parse_policy(policy,p,d,s):
             miss_rate = miss_rate_d2_d1([p1,p2,p3],[d1,d2,d3],s)
             h,e = hit_rate_d2_d1([p1,p2,p3],[d1,d2,d3],s)
     return miss_rate, h, e
+
+def log_values(values):
+    f = open('policy.log','w+')
+    f.write(str(len(values))+'\n')
+    for v in values:
+        f.write("%.2f " %v )
+    f.close()
     
 n = 512
 if __name__ == '__main__':
     p = [0.3, 0.2, 0.5]
-    d = [5, 19, 29]
+    d = [50, 190, 290]
     [p1,p2,p3] = p
     [d1,d2,d3] = d 
-    s = 12
+    s = 120
 
     rdd = np.zeros(n)
     rdd[d1] = p1
@@ -363,5 +373,6 @@ if __name__ == '__main__':
     drag = 1
     [h,e] = parse_policy([0],p,d,s)[1:3]
     print opt_policy(p,d,s)
-    print value_iteration(d,h,e,s,drag,True)
+    print value_iteration(d,h,e,s,drag,False)
     #print policy_iteration(p,d,s,drag)
+
