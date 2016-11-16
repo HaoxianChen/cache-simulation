@@ -259,6 +259,7 @@ e_a$.
 
 At smooth regions where $h_a = 0$ and $e_a = 0$, we have the slope:
 \begin{equation}
+\label{eq:slope}
 \begin{aligned}
 k & = \Delta V_{a+1} - \Delta V_a \\
 & = l_0 \Delta V_1 + h_0
@@ -278,9 +279,36 @@ So $d_2$ is a critical point where:
 V_{d_2}' & = h_{d_2} V_0 + h_{d_2} + e_{d_2} V_0 \\
 V_0' & = h_0 (1+V_0) + e_0 V_0 + l_0 V_1 \\
 \Delta V_{d_2} & = V_{d_2}' - V_0' \\
-& = h{d_2} - h_0 - l_0 \Delta V_1
+& = h_{d_2} - h_0 - l_0 \Delta V_1
 \end{aligned}
 \end{equation}
+
+The next critical point we look at is $d_1$, by computing $\Delta V_{d_1}$'s
+value propagating from 0 and back propagating from d2, we could has another
+relation between slope k and $\Delta V_1$.
+
+\begin{equation}
+\label{eq:vd1}
+\begin{aligned}
+\Delta V_{d_1} & = l_{d_1} \Delta V_{d_1+1} - k + h_{d_1} \\
+& = \Delta V_{1} + k(d_1 - 1)
+\end{aligned}
+\end{equation}
+
+\begin{equation}
+\Delta V_1 + (d_1 - l_{d_1}d_1 + l_{d_1}d_2)k = 1-e_{d_1}
+\end{equation}
+
+Combining equation~\ref{eq:slope} and equation~\ref{eq:vd1}, we solve k:
+\begin{equation}
+\begin{aligned}
+k & = \frac{l_0 (1-e_{d_1})}{1+l_0 [(h_{d_1}+e_{d_1})d_1+l_{d_1}d_2]} \\
+& \approx \frac{1-e_{d_1}}{(h_{d_1}+e_{d_1})d_1+l_{d_1}d_2} \\
+\end{aligned}
+\end{equation}
+
+% TODO: try to plug in different distributions based on different replacement
+% policies, see if k changes.
 
 \bibliography{main}{}
 \bibliographystyle{plain}
