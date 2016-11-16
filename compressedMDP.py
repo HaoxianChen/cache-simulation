@@ -208,7 +208,10 @@ def analysis():
     plt.show()
     plt.close('all')
 
-def value_iteration(h,e,s,threshold,drag,allow_plot):
+def value_iteration(d,h,e,s,drag,allow_plot=False):
+    threshold = 1e-4
+
+    [d1,d2,d3] = d
     v = np.zeros((2,n))
     delta = np.zeros(n)
 
@@ -217,17 +220,19 @@ def value_iteration(h,e,s,threshold,drag,allow_plot):
     cumevents = np.cumsum((h+e)[::-1])[::-1]
     cumevents = np.where(cumevents < 1e-5, np.ones_like(cumevents), cumevents)
 
-    fig = plt.figure(figsize=(6,6))
-    ax = fig.add_subplot(1,1,1)
-    #slope = (1 + h[d1]) / d2
-    #simple = slope * np.arange(len(rdd))
-    #simple[d1:] += 1 - slope * d2
-    #simple[d2:] = 0
-    # ax.plot(simple)
-    line, = ax.plot(v[0])
-    plt.ion()
+    if allow_plot:
+        plt.close('all')
+        fig = plt.figure(figsize=(6,6))
+        ax = fig.add_subplot(1,1,1)
+        #slope = (1 + h[d1]) / d2
+        #simple = slope * np.arange(len(rdd))
+        #simple[d1:] += 1 - slope * d2
+        #simple[d2:] = 0
+        # ax.plot(simple)
+        line, = ax.plot(v[0])
+        plt.ion()
 
-    for i in range(10000):
+    for i in range(100000):
         this = v[i%2]
         that = v[(i+1)%2]
 
@@ -235,33 +240,39 @@ def value_iteration(h,e,s,threshold,drag,allow_plot):
             this[j] = 0
 
             # hit probability
-            this[j] += h[j] / cumevents[j] * (1 + drag * that[0])
+            #this[j] += h[j] / cumevents[j] * (1 + drag * that[0])
+            this[j] += h[j] / cumevents[j] * (1 + that[0])
 
             # eviction probability
-            this[j] += e[j] / cumevents[j] * (0 + drag * that[0])
+            # this[j] += e[j] / cumevents[j] * (0 + drag * that[0])
+            this[j] += e[j] / cumevents[j] * (0 + that[0])
 
             # otherwise
             if j+1 < n:
                 leftover = (cumevents[j] - h[j] - e[j]) / cumevents[j]
                 if leftover > 1e-5:
-                    this[j] += leftover * (0 + drag * that[j+1])
+                    #this[j] += leftover * (0 + drag * that[j+1])
+                    this[j] += leftover * (0 + that[j+1])
 
             if j>=0 and j <= boundry:
                 delta[j] = abs(this[j]-this[0]-(that[j]-that[0])) 
 
-        if max(delta) < threshold: break
+        if max(delta) < threshold: 
+            plt.interactive(False)
+            break
 
         if i%50 != 0 or not allow_plot: continue
         ax.set_title('After iteration %d' % i)
         yplot = this - this[0]
         line.set_ydata(yplot)
         ax.set_ylim(np.min(yplot[0:boundry+1]), np.max(yplot[0:boundry+1]))
+        ax.set_xlim(0,boundry+1)
         ax.relim()
         ax.autoscale_view()
         plt.draw() # tell pyplot data has changed
         plt.pause(0.000001) # it won't actually redraw until you call pause!!!
 
-    print 'boundry=' + str(boundry)
+#    print 'boundry=' + str(boundry)
     if boundry > d2:
         return np.argsort([this[0],this[d1+1],this[d2+1]])
     elif boundry > d1:
@@ -284,42 +295,29 @@ def opt_policy(p,d,s):
     elif np.argmin(miss_rate) == 3:
         return [2,1,0],miss_rate[3]
 
-def policy_iteration():
-    cache_size = range(int(ed)+10,0,-10)
+def policy_iteration(p,d,s,drag=1):
+    [p1,p2,p3] = p
+    [d1,d2,d3] = d
+    ed = round(np.dot(p,d))
+    cache_size = range(int(ed+1),s,-5) + [s,]
     policy = [0]
     for s in cache_size:
 
-        [opt,opt_miss_rate] = opt_policy([p1,p2,p3],[d1,d2,d3],s)
+        [opt,opt_miss_rate] = opt_policy(p,d,s)
 
-        if policy[0] == 0:
-            h,e = hit_rate_mru([p1,p2,p3],[d1,d2,d3],s)
-        elif policy[0] == 1:
-            h,e = hit_rate_d1([p1,p2,p3],[d1,d2,d3],s)
-        elif policy[0] == 2:
-            if policy[1] == 0:
-                h,e = hit_rate_d2([p1,p2,p3],[d1,d2,d3],s)
-            elif policy[1] == 1:
-                h,e = hit_rate_d2_d1([p1,p2,p3],[d1,d2,d3],s)
-            
+        [h,e] = parse_policy(policy,p,d,s)[1:3]
+
         plt.subplot(1,2,1)
         plt.plot(h)
         plt.subplot(1,2,2)
         plt.plot(e)
         plt.show()
-        policy = value_iteration(h,e,s,1e-3,0.99,True)
-
-        if policy[0] == 0:
-            miss_rate = miss_rate_mru([p1,p2,p3],[d1,d2,d3],s)
-        elif policy[0] == 1:
-            miss_rate = miss_rate_d1([p1,p2,p3],[d1,d2,d3],s)
-        elif policy[0] == 2:
-            if policy[1] == 0:
-                miss_rate = miss_rate_d2([p1,p2,p3],[d1,d2,d3],s)
-            elif policy[1] == 1:
-                miss_rate = miss_rate_d2_d1([p1,p2,p3],[d1,d2,d3],s)
+        policy = value_iteration(d,h,e,s,drag,True)
+        miss_rate = parse_policy(policy,p,d,s)[0]
         print 'size= ' + str(s) 
         print 'optimal policy: ' + str(opt) + ' miss rate: ' + str(opt_miss_rate)
         print 'value iteration yields policy: ' + str(policy) + ' miss rate: ' + str(miss_rate)
+    return policy
 
 def fill_rdd(p,d,s):
     h,e = hit_rate_d1(p,d,s)
@@ -327,15 +325,32 @@ def fill_rdd(p,d,s):
     h = (1-w) * h + w * rdd
 
     value_iteration(h,e,s,1e-31,1,True)
+
+def parse_policy(policy,p,d,s):
+    [p1,p2,p3] = p
+    [d1,d2,d3] = d
+    if policy[0] == 0:
+        miss_rate = miss_rate_mru([p1,p2,p3],[d1,d2,d3],s)
+        h,e = hit_rate_mru([p1,p2,p3],[d1,d2,d3],s)
+    elif policy[0] == 1:
+        miss_rate = miss_rate_d1([p1,p2,p3],[d1,d2,d3],s)
+        h,e = hit_rate_d1([p1,p2,p3],[d1,d2,d3],s)
+    elif policy[0] == 2:
+        if policy[1] == 0:
+            miss_rate = miss_rate_d2([p1,p2,p3],[d1,d2,d3],s)
+            h,e = hit_rate_d2([p1,p2,p3],[d1,d2,d3],s)
+        elif policy[1] == 1:
+            miss_rate = miss_rate_d2_d1([p1,p2,p3],[d1,d2,d3],s)
+            h,e = hit_rate_d2_d1([p1,p2,p3],[d1,d2,d3],s)
+    return miss_rate, h, e
     
+n = 512
 if __name__ == '__main__':
-    n = 512
-    d1 = 24
-    d2 = 96
-    d3 = 240
-    p1 = 0.4
-    p2 = 0.35
-    p3 = 1 - p1 - p2
+    p = [0.3, 0.2, 0.5]
+    d = [5, 19, 29]
+    [p1,p2,p3] = p
+    [d1,d2,d3] = d 
+    s = 12
 
     rdd = np.zeros(n)
     rdd[d1] = p1
@@ -347,4 +362,8 @@ if __name__ == '__main__':
 
     analysis()
     # fill_rdd([p1,p2,d2],[d1,d2,d3],20)
-    policy_iteration()
+    drag = 1
+    [h,e] = parse_policy([0],p,d,s)[1:3]
+    print opt_policy(p,d,s)
+    print value_iteration(d,h,e,s,drag,True)
+    print policy_iteration(p,d,s,drag)
