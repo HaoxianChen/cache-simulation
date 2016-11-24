@@ -5,7 +5,7 @@ import time
 import datetime
 import logging
 import argparse
-import mru
+import traceGen
 import compressedMDP as cmdp
 from cache import *
 
@@ -26,8 +26,8 @@ if __name__ == '__main__':
     policy_value[d2:MAX_AGE] -= MAX_AGE
     # policy_value[d1:d2] -= policy_value[d2-1]
 
-    # trace = mru.TraceScan([p for p,d in idealRdDist], [int(p*d+0.5) for p,d in idealRdDist])
-    trace = mru.TraceDistribution(idealRdDist)
+    # trace = traceGen.TraceScan([p for p,d in idealRdDist], [int(p*d+0.5) for p,d in idealRdDist])
+    trace = traceGen.TraceDistribution(idealRdDist)
     trace.generate(10000)
 
     plt.figure()

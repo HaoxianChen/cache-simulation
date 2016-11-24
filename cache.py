@@ -2,7 +2,7 @@ import numpy as np
 import logging
 import random
 
-MAX_AGE = 330
+MAX_AGE = 512
 LOG_FILENAME = 'logs/cache.log'
 logging.basicConfig(filename=LOG_FILENAME, filemode='w',level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -20,6 +20,9 @@ class Cache:
         self.data = []
         self.counter = -1
         self.value = value
+        if len(value) < MAX_AGE:
+            self.value = np.append(self.value, [min(value)]*(MAX_AGE-len(value)))
+        print "value length: %d  " %len(self.value)
         self.tags = []
 
         self.evict_candidate = None

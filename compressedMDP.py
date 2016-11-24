@@ -1,11 +1,12 @@
 #!/usr/bin/python
 
 import matplotlib
-# matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import numpy as np
 import math
 import analytical_model as model
+import traceGen 
+import cache 
 
 np.set_printoptions(precision=2)
 
@@ -309,7 +310,7 @@ def policy_iteration(p,d,s,drag=1):
 
         [opt,opt_miss_rate] = opt_policy(p,d,s)
 
-        [h,e] = parse_policy(values,p,d,s)[1:3]
+        [h,e] = sim_policy(values,p,d,s)[1:3]
         
         if h[d[-1]] < 1e-4:
             print 'fill in rdd'
@@ -329,7 +330,7 @@ def policy_iteration(p,d,s,drag=1):
         plt.show()
 
         values = value_iteration(values,p,d,h,e,s,drag,True)
-        miss_rate = parse_policy(values,p,d,s)[0]
+        # miss_rate = parse_policy(values,p,d,s)[0]
         print 'size= ' + str(s) 
         print 'optimal policy: ' + str(opt) + ' miss rate: ' + str(opt_miss_rate)
         print "v[1] = %.3f" %values[1]
@@ -342,6 +343,54 @@ def fill_rdd(p,d,h):
     new_h = (1-w) * h + w * rdd
 
     return new_h
+
+def sim_policy(values,p,d,s):
+
+    idealRdDist = [(p[i],d[i]) for i in range(len(p))]
+    trace = traceGen.TraceDistribution(idealRdDist)
+    trace.generate(10000)
+
+    plt.figure()
+    def idealRdDistNonSparse():
+        cump = 0.
+        i = 0
+        rdd = np.zeros_like(trace.rdDist)
+        for d in range(len(rdd)):
+            while i < len(idealRdDist) and idealRdDist[i][1] <= d:
+                cump += idealRdDist[i][0]
+                i += 1
+            rdd[d] = cump * len(trace.trace)
+        return rdd
+
+    plt.plot(idealRdDistNonSparse(), label='Ideal RD dist')
+    plt.plot(np.cumsum(trace.rdDist), label='Actual RD dist')
+    plt.legend(loc='best')
+    plt.show()
+
+    plt.figure()
+    plt.plot(values)
+    plt.xlabel('age')
+    plt.ylabel('value')
+    plt.show()
+
+    my_cache = cache.Cache(s,values)
+
+    for i in range(len(trace.trace)):
+        my_cache.lookup(trace.trace[i])
+
+    miss_rate = 1.0 - float(my_cache.get_hit_rate())
+    events = float(sum(my_cache.get_hit_ages()) + sum(my_cache.get_evict_ages()))
+    h = my_cache.get_evict_ages() / events
+    e = my_cache.get_evict_ages() / events
+    # plot hit and eviction distribution
+    plt.figure()
+    plt.subplot(2,1,1,title='hit age distribution')
+    plt.plot(np.cumsum(my_cache.get_hit_ages()/events))
+    plt.subplot(2,1,2,title='evict age distribution')
+    plt.plot(np.cumsum(my_cache.get_evict_ages()/events))
+    plt.show()
+
+    return miss_rate, h, e
 
 def parse_policy(values,p,d,s):
     critical_point = [0,] + d[0:-1]

@@ -36,9 +36,6 @@ test_spec = '-'+str(x1) + '-' + str(p1) + '-' + str(x2) + '-' + str(p2) + '-' + 
 policy_name = '0-'
 value = np.ones(MAX_AGE,dtype=float)
 value[0] = 0
-# value[d1] = -2
-# value[d2] = -1
->>>>>>> analytical-model
 array1= range(0,x1)
 array2 = range(x1,x1+x2)
 array3 = range(x1+x2,x1+x2+x3)
@@ -107,27 +104,6 @@ for j,s in enumerate(cache_size):
             if e > 0: print 'evict rate at age ' + str(a) + '= ' + str(e)
             f.write(str(a)+' ')
         f.write('\n')
-# 
-#         # log age values
-#             f.write(str(v)+' ')
-#         f.write('\n')
-# 
-# 
-# # log miss rate curve
-# for s in cache_size:
-#     f.write(str(s)+' ')
-# f.write('\n')
-# for r in miss_rate.tolist():
-#     f.write(str(r)+' ')
-# f.write('\n')
-# 
-# # log test spec
-# f.write( "x1: " + str(x1))
-# f.write( "x2: " + str(x2))
-# f.write( "x3: " + str(x3))
-# f.write( "p1: " + str(p1))
-# f.write( "p2: " + str(p2))
-# f.write( "p3: " + str(p3))
 
     cache = Cache(s,value)
     a_counter1 = 0
