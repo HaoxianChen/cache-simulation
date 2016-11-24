@@ -5,6 +5,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import math
+import analytical_model as model
 
 np.set_printoptions(precision=2)
 
@@ -86,7 +87,7 @@ def hit_rate_mru(p,d,s):
         h[d1] = p1*s/ed
         h[d2] = p2*s/ed
         h[d3] = p3*s/ed
-        e[0] = 1-s/ed
+        e[1] = 1-s/ed
     elif s>=ed:
         hit_rate = 1.
         h[d1] = p1
@@ -106,7 +107,7 @@ def hit_rate_d1(p,d,s):
     if s>0 and s<= d1:
         hit_rate = float(p1*s/ed)
         h[d1] = hit_rate
-        e[0] = 1. - hit_rate/p1
+        e[1] = 1. - hit_rate/p1
         e[d1] = (1. -p1) * hit_rate/p1
     elif s>d1 and s<ed:
         hit_rate = 1. - (1. - p1)*(ed-s)/(ed-d1)
@@ -136,7 +137,7 @@ def hit_rate_d2(p,d,s):
         x = hit_rate / (1-p3)
         h[d1] = p1 * x
         h[d2] = p2 * x
-        e[0] = 1. - x
+        e[1] = 1. - x
         e[d2] = p3 * x
     elif s>critical_d and s<ed:
         hit_rate = 1. - (ed-s)/(d3-d2)
@@ -165,7 +166,7 @@ def hit_rate_d2_d1(p,d,s):
         hit_rate = p1*s/d1
         x = hit_rate / p1
         h[d1] = p1 * x
-        e[0] = 1. - x
+        e[1] = 1. - x
         e[d1] = (1-p1) * x
     elif s>d1 and s<=critical_d:
         hit_rate = p1 + p2*(s-d1)/((1-p1)*(d2-d1))
@@ -188,7 +189,7 @@ def hit_rate_d2_d1(p,d,s):
 
     return h,e
 
-def analysis():
+def analysis(p,d):
     _, (a1, a2) = plt.subplots(2,1)
     a1.set_title('RDD')
     a1.plot(rdd)
@@ -197,23 +198,26 @@ def analysis():
 
     a2.set_title('Miss rate')
     # when 0<S<d1
-    a2.plot([miss_rate_mru([p1,p2,p3],[d1,d2,d3],size) for size in s],label='MRU')
-    a2.plot([miss_rate_d1([p1,p2,p3],[d1,d2,d3],size) for size in s],label='d1')
-    a2.plot([miss_rate_d2([p1,p2,p3],[d1,d2,d3],size) for size in s],label='d2', marker='.')
-    a2.plot([miss_rate_d2_d1([p1,p2,p3],[d1,d2,d3],size) for size in s],label='d2, d1', marker='*')
+    a2.plot([miss_rate_mru(p,d,size) for size in s],label='MRU')
+    a2.plot([miss_rate_d1(p,d,size) for size in s],label='d1')
+    a2.plot([miss_rate_d2(p,d,size) for size in s],label='d2', marker='.')
+    a2.plot([miss_rate_d2_d1(p,d,size) for size in s],label='d2, d1', marker='*')
     a2.set_xlim(0,ed)
     a2.set_ylim(0,1)
     a2.legend(loc='best', fontsize=12)
     plt.tight_layout()
     plt.show()
     plt.close('all')
-
-def value_iteration(d,h,e,s,drag,allow_plot=False):
+    
+def value_iteration(values,p,d,h,e,s,drag,allow_plot=False):
+    
     allow_log = True
-    threshold = 1e-3
+    threshold = 1e-4
 
-    [d1,d2,d3] = d
+    [d1,d2,d3] = d[0:3]
     v = np.zeros((2,n))
+    v[1,:len(values)] = values
+
     delta = np.zeros(n)
 
     boundry = np.argmax(np.cumsum(h))
@@ -225,15 +229,17 @@ def value_iteration(d,h,e,s,drag,allow_plot=False):
         plt.close('all')
         fig = plt.figure(figsize=(6,6))
         ax = fig.add_subplot(1,1,1)
-        #slope = (1 + h[d1]) / d2
-        #simple = slope * np.arange(len(rdd))
-        #simple[d1:] += 1 - slope * d2
-        #simple[d2:] = 0
-        # ax.plot(simple)
+        # slope = (1 + h[d1]) / d2
+        # slope = 1 / ed
+        # simple = slope * np.arange(len(rdd))
+        # simple[d1+1:] += 1 - slope * d2
+        # simple[d2+1:] = 0
+        #simple = model.analysis_modal(p,d,h,e,False)
+        #ax.plot(simple)
         line, = ax.plot(v[0])
         plt.ion()
 
-    for i in range(10000):
+    for i in range(20000):
         this = v[i%2]
         that = v[(i+1)%2]
 
@@ -250,14 +256,15 @@ def value_iteration(d,h,e,s,drag,allow_plot=False):
             if j+1 < n:
                 leftover = (cumevents[j] - h[j] - e[j]) / cumevents[j]
                 if leftover > 1e-5:
-                    #this[j] += leftover * (0 + drag * that[j+1])
-                    this[j] += leftover * (0 + that[j+1])
+                    this[j] += leftover * (0 + drag * that[j+1])
+                    # this[j] += leftover * (0 + that[j+1])
 
             if j>=0 and j <= boundry:
                 delta[j] = abs(this[j]-this[0]-(that[j]-that[0])) 
 
         if max(delta) < threshold: 
-            # plt.interactive(False)
+            if allow_plot:
+                plt.ioff()
             if allow_log:
                 log_values(this-this[0])
             break
@@ -273,13 +280,7 @@ def value_iteration(d,h,e,s,drag,allow_plot=False):
         plt.draw() # tell pyplot data has changed
         plt.pause(0.000001) # it won't actually redraw until you call pause!!!
 
-#    print 'boundry=' + str(boundry)
-    if boundry > d2:
-        return np.argsort([this[1],this[d1+1],this[d2+1]])
-    elif boundry > d1:
-        return np.argsort([this[1],this[d1+1],-10])
-    else:
-        return [1,0]
+    return this - this[0]
 
 def opt_policy(p,d,s):
     miss_rate = np.zeros(4)
@@ -297,52 +298,76 @@ def opt_policy(p,d,s):
         return [2,1,0],miss_rate[3]
 
 def policy_iteration(p,d,s,drag=1):
-    [p1,p2,p3] = p
-    [d1,d2,d3] = d
     ed = round(np.dot(p,d))
-    cache_size = range(int(ed+1),s,-5) + [s,]
-    policy = [0]
+    step = - int(ed/8.)
+    assert abs(step) >= 1
+    # cache_size = range(int(ed),s,step) + [s,]
+    cache_size = [s] * 10
+    # values = np.zeros(max(d)+10)
+    values = np.arange(max(d)+10)
     for s in cache_size:
 
         [opt,opt_miss_rate] = opt_policy(p,d,s)
 
-        [h,e] = parse_policy(policy,p,d,s)[1:3]
+        [h,e] = parse_policy(values,p,d,s)[1:3]
+        
+        if h[d[-1]] < 1e-4:
+            print 'fill in rdd'
+            h = fill_rdd(p,d,h)
 
+        plt.figure()
         plt.subplot(1,2,1)
         plt.plot(h)
+        plt.xlabel('age')
+        plt.ylabel('hit probability')
+        plt.title('hit age distribution')
         plt.subplot(1,2,2)
         plt.plot(e)
+        plt.xlabel('age')
+        plt.ylabel('evict probability')
+        plt.title('evict age distribution')
         plt.show()
-        policy = value_iteration(d,h,e,s,drag,True)
-        miss_rate = parse_policy(policy,p,d,s)[0]
+
+        values = value_iteration(values,p,d,h,e,s,drag,True)
+        miss_rate = parse_policy(values,p,d,s)[0]
         print 'size= ' + str(s) 
         print 'optimal policy: ' + str(opt) + ' miss rate: ' + str(opt_miss_rate)
-        print 'value iteration yields policy: ' + str(policy) + ' miss rate: ' + str(miss_rate)
-    return policy
+        print "v[1] = %.3f" %values[1]
+        for i in range(len(d)):
+            print "v[%d] = %.3f" %(d[i]+1,values[d[i]+1])
+    return values
 
-def fill_rdd(p,d,s):
-    h,e = hit_rate_d1(p,d,s)
-    w = 0.1
-    h = (1-w) * h + w * rdd
+def fill_rdd(p,d,h):
+    w = 0.05
+    new_h = (1-w) * h + w * rdd
 
-    value_iteration(h,e,s,1e-31,1,True)
+    return new_h
 
-def parse_policy(policy,p,d,s):
-    [p1,p2,p3] = p
-    [d1,d2,d3] = d
+def parse_policy(values,p,d,s):
+    critical_point = [0,] + d[0:-1]
+    policy = np.argsort([values[critical_point[i]+1] for i in range(len(critical_point))])
+    
     if policy[0] == 0:
-        miss_rate = miss_rate_mru([p1,p2,p3],[d1,d2,d3],s)
-        h,e = hit_rate_mru([p1,p2,p3],[d1,d2,d3],s)
+        miss_rate = miss_rate_mru(p,d,s)
+        h,e = hit_rate_mru(p,d,s)
     elif policy[0] == 1:
-        miss_rate = miss_rate_d1([p1,p2,p3],[d1,d2,d3],s)
-        h,e = hit_rate_d1([p1,p2,p3],[d1,d2,d3],s)
+        miss_rate = miss_rate_d1(p,d,s)
+        h,e = hit_rate_d1(p,d,s)
     elif policy[0] == 2:
         if policy[1] == 0:
-            miss_rate = miss_rate_d2([p1,p2,p3],[d1,d2,d3],s)
-            h,e = hit_rate_d2([p1,p2,p3],[d1,d2,d3],s)
+            miss_rate = miss_rate_d2(p,d,s)
+            h,e = hit_rate_d2(p,d,s)
         elif policy[1] == 1:
-            miss_rate = miss_rate_d2_d1([p1,p2,p3],[d1,d2,d3],s)
-            h,e = hit_rate_d2_d1([p1,p2,p3],[d1,d2,d3],s)
+            miss_rate = miss_rate_d2_d1(p,d,s)
+            h,e = hit_rate_d2_d1(p,d,s)
+
+#     testing convergence
+#     for a in range(1,len(e)):
+#         e[a] += e[a-1] * 0.9
+# 
+#     if np.sum(h) < 1:
+#         e *= (1. - np.sum(h)) / np.sum(e)
+
     return miss_rate, h, e
 
 def log_values(values):
@@ -354,25 +379,50 @@ def log_values(values):
     
 n = 512
 if __name__ == '__main__':
-    p = [0.3, 0.2, 0.5]
-    d = [50, 190, 290]
-    [p1,p2,p3] = p
-    [d1,d2,d3] = d 
-    s = 120
+    p = [0.25, 0.25, 0.5]
+    d = [40,80,320]
 
     rdd = np.zeros(n)
-    rdd[d1] = p1
-    rdd[d2] = p2
-    rdd[d3] = p3
+    for i in range(len(d)):
+        rdd[d[i]] = p[i]
     ed = np.sum(np.arange(n) * rdd) # expected reuse distance = working set size
+    s = 80
+    #assert ed > d2
 
-    assert ed > d2
+    analysis(p,d)
+    # values = fill_rdd(p,d,s)
+    drag = 0.9999
+    values = policy_iteration(p,d,s,drag)
 
-    analysis()
-    # fill_rdd([p1,p2,d2],[d1,d2,d3],20)
-    drag = 1
-    [h,e] = parse_policy([0],p,d,s)[1:3]
-    print opt_policy(p,d,s)
-    print value_iteration(d,h,e,s,drag,False)
-    #print policy_iteration(p,d,s,drag)
+    #print opt_policy(p,d,s)
+    # values = np.arange(max(d)+10)
+    # values[d[0]+1:] -= values[d[1]]
+    # values[d[1]+1:] -= values[d[2]]
+    # plt.plot(values)
+    # plt.show()
+    # [h,e] = parse_policy(values,p,d,s)[1:3]
 
+    # if h[max(d)] < 10e-4:
+    #     print 'fill rdd'
+    #     h = fill_rdd(p,d,h)
+
+    # plt.figure()
+    # plt.subplot(1,2,1)
+    # plt.plot(h)
+    # plt.xlim(0,ed)
+    # plt.subplot(1,2,2)
+    # plt.plot(e)
+    # plt.xlim(0,ed)
+    # plt.show()
+    # values = value_iteration(p,d,h,e,s,drag,True)
+    # plt.close("all")
+    print "v[1] = %.3f" %values[1]
+    for i in range(len(d)):
+        print "v[%d] = %.3f" %(d[i]+1,values[d[i]+1])
+    plt.close('all')
+    plt.figure()
+    plt.plot(values)
+    plt.xlim(0,max(d))
+    plt.ylim(min(values[0:d[2]]),max(values[0:d[2]]))
+    plt.show()
+    
