@@ -230,13 +230,8 @@ def value_iteration(values,p,d,h,e,s,drag,allow_plot=False):
         plt.close('all')
         fig = plt.figure(figsize=(6,6))
         ax = fig.add_subplot(1,1,1)
-        # slope = (1 + h[d1]) / d2
-        # slope = 1 / ed
-        # simple = slope * np.arange(len(rdd))
-        # simple[d1+1:] += 1 - slope * d2
-        # simple[d2+1:] = 0
-        #simple = model.analysis_modal(p,d,h,e,False)
-        #ax.plot(simple)
+        simple = model.analysis_modal(p,d,h,e,False)
+        ax.plot(simple)
         line, = ax.plot(v[0])
         plt.ion()
 
@@ -258,7 +253,6 @@ def value_iteration(values,p,d,h,e,s,drag,allow_plot=False):
                 leftover = (cumevents[j] - h[j] - e[j]) / cumevents[j]
                 if leftover > 1e-5:
                     this[j] += leftover * (0 + drag * that[j+1])
-                    # this[j] += leftover * (0 + that[j+1])
 
             if j>=0 and j <= boundry:
                 delta[j] = abs(this[j]-this[0]-(that[j]-that[0])) 
@@ -274,7 +268,7 @@ def value_iteration(values,p,d,h,e,s,drag,allow_plot=False):
         ax.set_title('After iteration %d' % i)
         yplot = this - this[0]
         line.set_ydata(yplot)
-        ax.set_ylim(np.min(yplot[0:boundry+1]), np.max(yplot[0:boundry+1]))
+        ax.set_ylim(np.min(yplot[0:boundry]), np.max(yplot[0:boundry+1]))
         ax.set_xlim(0,boundry+1)
         ax.relim()
         ax.autoscale_view()
@@ -305,7 +299,7 @@ def policy_iteration(p,d,s,drag=1):
     # cache_size = range(int(ed),s,step) + [s,]
     cache_size = [s] * 10
     # values = np.zeros(max(d)+10)
-    values = np.arange(max(d)+10)
+    values = np.arange(max(d))
     for s in cache_size:
 
         [opt,opt_miss_rate] = opt_policy(p,d,s)
@@ -315,19 +309,6 @@ def policy_iteration(p,d,s,drag=1):
         if h[d[-1]] < 1e-4:
             print 'fill in rdd'
             h = fill_rdd(p,d,h)
-
-        plt.figure()
-        plt.subplot(1,2,1)
-        plt.plot(h)
-        plt.xlabel('age')
-        plt.ylabel('hit probability')
-        plt.title('hit age distribution')
-        plt.subplot(1,2,2)
-        plt.plot(e)
-        plt.xlabel('age')
-        plt.ylabel('evict probability')
-        plt.title('evict age distribution')
-        plt.show()
 
         values = value_iteration(values,p,d,h,e,s,drag,True)
         # miss_rate = parse_policy(values,p,d,s)[0]
@@ -350,6 +331,7 @@ def sim_policy(values,p,d,s):
     trace = traceGen.TraceDistribution(idealRdDist)
     trace.generate(10000)
 
+    plt.close('all')
     plt.figure()
     def idealRdDistNonSparse():
         cump = 0.
@@ -371,6 +353,7 @@ def sim_policy(values,p,d,s):
     plt.plot(values)
     plt.xlabel('age')
     plt.ylabel('value')
+    plt.ylim([min(values[0:max(d)]),max(values[0:max(d)])])
     plt.show()
 
     my_cache = cache.Cache(s,values)
@@ -429,7 +412,7 @@ def log_values(values):
 n = 512
 if __name__ == '__main__':
     p = [0.25, 0.25, 0.5]
-    d = [40,80,320]
+    d = [50,100,300]
 
     rdd = np.zeros(n)
     for i in range(len(d)):
@@ -439,32 +422,9 @@ if __name__ == '__main__':
     #assert ed > d2
 
     analysis(p,d)
-    # values = fill_rdd(p,d,s)
     drag = 0.9999
     values = policy_iteration(p,d,s,drag)
 
-    #print opt_policy(p,d,s)
-    # values = np.arange(max(d)+10)
-    # values[d[0]+1:] -= values[d[1]]
-    # values[d[1]+1:] -= values[d[2]]
-    # plt.plot(values)
-    # plt.show()
-    # [h,e] = parse_policy(values,p,d,s)[1:3]
-
-    # if h[max(d)] < 10e-4:
-    #     print 'fill rdd'
-    #     h = fill_rdd(p,d,h)
-
-    # plt.figure()
-    # plt.subplot(1,2,1)
-    # plt.plot(h)
-    # plt.xlim(0,ed)
-    # plt.subplot(1,2,2)
-    # plt.plot(e)
-    # plt.xlim(0,ed)
-    # plt.show()
-    # values = value_iteration(p,d,h,e,s,drag,True)
-    # plt.close("all")
     print "v[1] = %.3f" %values[1]
     for i in range(len(d)):
         print "v[%d] = %.3f" %(d[i]+1,values[d[i]+1])
