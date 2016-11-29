@@ -21,10 +21,25 @@ def value_iteration(values,p,d,h,e,s,drag,allow_plot=False):
 
     delta = np.zeros(n)
 
+    h = np.where(h < 1e-5, np.zeros_like(h), h)
     boundry = np.argmax(np.cumsum(h))
+    print "boundry = %d " %boundry
 
     cumevents = np.cumsum((h+e)[::-1])[::-1]
     cumevents = np.where(cumevents < 1e-5, np.ones_like(cumevents), cumevents)
+
+    plt.close('all')
+    plt.figure()
+    plt.subplot(3,1,1)
+    plt.plot(h)
+    plt.title('hit')
+    plt.subplot(3,1,2)
+    plt.plot(e)
+    plt.title('eviction')
+    plt.subplot(3,1,3)
+    plt.plot(cumevents)
+    plt.title('cumevents')
+    plt.show()
 
     if allow_plot:
         plt.close('all')
@@ -91,7 +106,7 @@ def policy_iteration(p,d,s,drag=1):
 
         [h,e] = sim_policy(values,p,d,s)[1:3]
         
-        if h[d[-1]] < 1e-4:
+        if h[d[-1]] < 1e-5:
             print 'fill in rdd'
             h = fill_rdd(p,d,h)
 
@@ -148,7 +163,7 @@ def sim_policy(values,p,d,s):
 
     miss_rate = 1.0 - float(my_cache.get_hit_rate())
     events = float(sum(my_cache.get_hit_ages()) + sum(my_cache.get_evict_ages()))
-    h = my_cache.get_evict_ages() / events
+    h = my_cache.get_hit_ages() / events
     e = my_cache.get_evict_ages() / events
     # plot hit and eviction distribution
     plt.figure()
@@ -190,13 +205,14 @@ def log_values(values):
 n = 512
 if __name__ == '__main__':
     p = [0.25, 0.25, 0.5]
-    d = [50,100,300]
+    d = [40,80,320]
 
     rdd = np.zeros(n)
     for i in range(len(d)):
         rdd[d[i]] = p[i]
     ed = np.sum(np.arange(n) * rdd) # expected reuse distance = working set size
     s = 80
+    print "size = %d" %s
     #assert ed > d2
 
     trimodal.analysis(p,d)
