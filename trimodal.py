@@ -1,6 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+n = 1024
+
 def miss_rate_mru(p,d,s):
     [p1,p2,p3] = p
     [d1,d2,d3] = d
@@ -169,7 +171,6 @@ def hit_rate_d2_d1(p,d,s):
     return h,e
 
 def analysis(p,d):
-    n = 512
     rdd = np.zeros(n)
     for i in range(len(d)):
         rdd[d[i]] = p[i]

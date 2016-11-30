@@ -23,25 +23,24 @@ def value_iteration(values,p,d,h,e,s,drag,allow_plot=False):
 
     h = np.where(h < 1e-5, np.zeros_like(h), h)
     boundry = np.argmax(np.cumsum(h))
-    print "boundry = %d " %boundry
 
     cumevents = np.cumsum((h+e)[::-1])[::-1]
     cumevents = np.where(cumevents < 1e-5, np.ones_like(cumevents), cumevents)
 
-    plt.close('all')
-    plt.figure()
-    plt.subplot(3,1,1)
-    plt.plot(h)
-    plt.title('hit')
-    plt.subplot(3,1,2)
-    plt.plot(e)
-    plt.title('eviction')
-    plt.subplot(3,1,3)
-    plt.plot(cumevents)
-    plt.title('cumevents')
-    plt.show()
-
     if allow_plot:
+        plt.close('all')
+        plt.figure()
+        plt.subplot(3,1,1)
+        plt.plot(h)
+        plt.title('hit')
+        plt.subplot(3,1,2)
+        plt.plot(e)
+        plt.title('eviction')
+        plt.subplot(3,1,3)
+        plt.plot(cumevents)
+        plt.title('cumevents')
+        plt.show()
+
         plt.close('all')
         fig = plt.figure(figsize=(6,6))
         ax = fig.add_subplot(1,1,1)
@@ -94,29 +93,24 @@ def value_iteration(values,p,d,h,e,s,drag,allow_plot=False):
 
 def policy_iteration(p,d,s,drag=1):
     ed = round(np.dot(p,d))
-    step = - int(ed/8.)
-    assert abs(step) >= 1
+    # step = - int(ed/8.)
+    # assert abs(step) >= 1
     # cache_size = range(int(ed),s,step) + [s,]
-    cache_size = [s] * 10
+    cache_size = [s] * 2
     # values = np.zeros(max(d)+10)
     values = np.arange(max(d))
     for s in cache_size:
 
-        [opt,opt_miss_rate] = trimodal.opt_policy(p,d,s)
+        # [opt,opt_miss_rate] = trimodal.opt_policy(p,d,s)
 
-        [h,e] = sim_policy(values,p,d,s)[1:3]
+        # [h,e] = sim_policy(values,p,d,s)[1:3]
+
+        [h,e] = parse_policy(values,p,d,s)[1:3]
         
         if h[d[-1]] < 1e-5:
-            print 'fill in rdd'
             h = fill_rdd(p,d,h)
 
         values = value_iteration(values,p,d,h,e,s,drag,True)
-        # miss_rate = parse_policy(values,p,d,s)[0]
-        print 'size= ' + str(s) 
-        print 'optimal policy: ' + str(opt) + ' miss rate: ' + str(opt_miss_rate)
-        print "v[1] = %.3f" %values[1]
-        for i in range(len(d)):
-            print "v[%d] = %.3f" %(d[i]+1,values[d[i]+1])
     return values
 
 def fill_rdd(p,d,h):
@@ -202,30 +196,18 @@ def log_values(values):
         f.write("%.2f " %v )
     f.close()
     
-n = 512
+n = 1024
 if __name__ == '__main__':
     p = [0.25, 0.25, 0.5]
     d = [40,80,320]
-
-    rdd = np.zeros(n)
-    for i in range(len(d)):
-        rdd[d[i]] = p[i]
-    ed = np.sum(np.arange(n) * rdd) # expected reuse distance = working set size
     s = 80
-    print "size = %d" %s
-    #assert ed > d2
 
-    trimodal.analysis(p,d)
+    # rdd = np.zeros(n)
+    # for i in range(len(d)):
+    #     rdd[d[i]] = p[i]
+    # ed = np.sum(np.arange(n) * rdd) # expected reuse distance = working set size
+    # assert ed > d2
+
+    # trimodal.analysis(p,d)
     drag = 0.9999
     values = policy_iteration(p,d,s,drag)
-
-    print "v[1] = %.3f" %values[1]
-    for i in range(len(d)):
-        print "v[%d] = %.3f" %(d[i]+1,values[d[i]+1])
-    plt.close('all')
-    plt.figure()
-    plt.plot(values)
-    plt.xlim(0,max(d))
-    plt.ylim(min(values[0:d[2]]),max(values[0:d[2]]))
-    plt.show()
-    
