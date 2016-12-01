@@ -3,6 +3,21 @@ import numpy as np
 
 n = 1024
 
+def miss_rate_lru(p,d,s):
+    [p1,p2,p3] = p
+    [d1,d2,d3] = d
+    ed = p1*d1 + p2*d2 + p3*d3
+    critical_d = p1*d1 + (1-p1)*d2
+    if s>0 and s <= d1: 
+        miss_rate = 1
+    elif s > d1 and s <= critical_d:
+        miss_rate = 1. - p1
+    elif s > critical_d and s < ed:
+        miss_rate = 1. - p1 - p2
+    else:
+        miss_rate = 0
+    return miss_rate
+
 def miss_rate_mru(p,d,s):
     [p1,p2,p3] = p
     [d1,d2,d3] = d
@@ -182,12 +197,14 @@ def analysis(p,d):
 
     s = np.arange(1,n)
 
-    a2.set_title('Miss rate')
     # when 0<S<d1
+    a2.plot([miss_rate_lru(p,d,size) for size in s],label='LRU')
     a2.plot([miss_rate_mru(p,d,size) for size in s],label='MRU')
     a2.plot([miss_rate_d1(p,d,size) for size in s],label='d1')
     a2.plot([miss_rate_d2(p,d,size) for size in s],label='d2', marker='.')
     a2.plot([miss_rate_d2_d1(p,d,size) for size in s],label='d2, d1', marker='*')
+    a2.set_ylabel('miss rate')
+    a2.set_xlabel('cache size')
     a2.set_xlim(0,ed)
     a2.set_ylim(0,1)
     a2.legend(loc='best', fontsize=12)
