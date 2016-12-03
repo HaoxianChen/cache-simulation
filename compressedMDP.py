@@ -195,12 +195,24 @@ def log_values(values):
     for v in values:
         f.write("%.2f " %v )
     f.close()
+    temp = values.argsort()
+    ranks = np.empty(len(values),int) 
+    ranks[temp] = np.arange(len(values),0,-1)
+    plt.plot(values,label='values')
+    plt.plot(ranks,label="ranks")
+    plt.show()
+    f = open('ranks.log','w+')
+    f.write(str(len(ranks))+'\n')
+    for v in ranks:
+        f.write("%.2f " %v )
+    f.close()
     
 n = 1024
 if __name__ == '__main__':
     p = [0.25, 0.25, 0.5]
     d = [40,80,320]
-    s = 80
+    s = 130
+    print "size = %d" %s
 
     # rdd = np.zeros(n)
     # for i in range(len(d)):
@@ -208,6 +220,6 @@ if __name__ == '__main__':
     # ed = np.sum(np.arange(n) * rdd) # expected reuse distance = working set size
     # assert ed > d2
 
-    # trimodal.analysis(p,d)
+    trimodal.analysis(p,d)
     drag = 0.9999
     values = policy_iteration(p,d,s,drag)
